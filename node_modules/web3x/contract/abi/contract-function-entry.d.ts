@@ -1,0 +1,14 @@
+/// <reference types="node" />
+import { ContractEntryDefinition } from './contract-abi-definition';
+import { ContractEntry } from './contract-entry';
+export declare class ContractFunctionEntry extends ContractEntry {
+    readonly signature: string;
+    constructor(entry: ContractEntryDefinition);
+    readonly constant: boolean | undefined;
+    readonly payable: boolean | undefined;
+    numArgs(): number;
+    decodeReturnValue(returnValue: string): any;
+    encodeABI(args: any[]): Buffer;
+    encodeParameters(args: any[]): Buffer;
+    decodeParameters(bytes: Buffer): any;
+}

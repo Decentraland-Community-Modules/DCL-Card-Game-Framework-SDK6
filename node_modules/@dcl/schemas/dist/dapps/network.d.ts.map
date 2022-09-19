@@ -1,0 +1,1 @@
+{"version":3,"file":"network.d.ts","sourceRoot":"","sources":["../../src/dapps/network.ts"],"names":[],"mappings":"AAAA,OAAO,EAEL,UAAU,EACV,gBAAgB,EACjB,MAAM,eAAe,CAAA;AAEtB;;;GAGG;AACH,oBAAY,OAAO;IACjB,QAAQ,aAAa;IACrB,KAAK,UAAU;CAChB;AAED;;GAEG;AACH,yBAAiB,OAAO,CAAC;IAChB,MAAM,MAAM,EAAE,UAAU,CAAC,OAAO,CAGtC,CAAA;IAEM,MAAM,QAAQ,EAAE,gBAAgB,CAAC,OAAO,CAChB,CAAA;CAChC"}

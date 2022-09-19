@@ -1,0 +1,7 @@
+These playing card images are within public domain. They can be used for any purpose without any attribution.
+Attribution: Byron Knoll (http://byronknoll.blogspot.com/)
+Link to source: https://code.google.com/archive/p/vector-playing-cards/downloads
+
+image sizes: 
+	individual: width=500,height=726
+	house slide: width=6500,height=726

@@ -1,0 +1,1 @@
+{"version":3,"file":"emote-representation-definition.d.ts","sourceRoot":"","sources":["../../../src/dapps/preview/emote-representation-definition.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,wBAAwB,EAAE,MAAM,gBAAgB,CAAA;AAEzD,aAAa;AACb,oBAAY,6BAA6B,GAAG,IAAI,CAC9C,wBAAwB,EACxB,UAAU,CACX,GAAG;IACF,QAAQ,EAAE;QACR,GAAG,EAAE,MAAM,CAAA;QACX,GAAG,EAAE,MAAM,CAAA;KACZ,EAAE,CAAA;CACJ,CAAA"}
