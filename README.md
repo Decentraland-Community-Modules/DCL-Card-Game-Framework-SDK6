@@ -12,10 +12,10 @@ This module is split into seperate segments to make management easier.
 File Overview:
 
 	game.ts: demo of on-start code
-  game-table: main table objects used to host games, single table can host multiple types of games, running a single game at a time
-  card-game-core: all core objects, management, mechanics for running a card game 
+  	game-table: main table objects used to host games, single table can host multiple types of games, running a single game at a time
+  	card-game-core: all core objects, management, mechanics for running a card game 
 	card-game-solitaire-freecell: specifics for the solitaire card game
-  utilities: general extensions, such as lists, dictionaries, and a 3d menu management system
+  	utilities: general extensions, such as lists, dictionaries, and a 3d menu management system
 
 You can find more information inside each of these files. Most files also contain heavy log text that is visible in your browser's console (just toggle isDebugging=true).
 
