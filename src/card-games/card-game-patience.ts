@@ -34,7 +34,7 @@ export class CardGameManagerSolitairePatience extends CardGameManager
             //create collection
             this.AddCollection(2, i);
             //set object position details
-            this.cardObjectManager.SetGroupObjectPosition(2, i, 0, new Vector3(1.52-(i*0.36), 0.05, 1.45));
+            this.cardObjectManager.SetGroupObjectPosition(2, i, 0, new Vector3(1.36-(i*0.4525), 0.05, 1.45));
             this.cardObjectManager.SetGroupCardPosition(2, i, 0, new Vector3(0, 0.01, 0));
             this.cardObjectManager.SetGroupCardPosition(2, i, 1, new Vector3(0, 0.001, 0));
             //set restriction details
@@ -50,9 +50,11 @@ export class CardGameManagerSolitairePatience extends CardGameManager
             //create collection
             this.AddCollection(2, i+4);
             //set object position details
-            this.cardObjectManager.SetGroupObjectPosition(2, i+4, 0, new Vector3(-1.52+(i*0.36), 0.05, 1.45));
+            this.cardObjectManager.SetGroupObjectPosition(2, i+4, 0, new Vector3(-1.36+(i*0.4525), 0.05, 1.45));
             this.cardObjectManager.SetGroupCardPosition(2, i+4, 0, new Vector3(0, 0.01, 0));
-            this.cardObjectManager.SetGroupCardPosition(2, i+4, 1, new Vector3(0, 0.001, 0));
+            //positioning is sperate for deck vs discard stacks
+            if(i == 0) this.cardObjectManager.SetGroupCardPosition(2, i+4, 1, new Vector3(0, 0.00, 0));
+            if(i == 1) this.cardObjectManager.SetGroupCardPosition(2, i+4, 1, new Vector3(0, 0.001, 0));
             //set restriction details
             //  change card limit
             this.GetCollection(2, i).cardMaxCount = 1;
@@ -68,7 +70,7 @@ export class CardGameManagerSolitairePatience extends CardGameManager
             //create collection
             this.AddCollection(3, i);
             //set object position details
-            this.cardObjectManager.SetGroupObjectPosition(3, i, 0, new Vector3(-1.52+(i*0.435), 0.05, 0.90));
+            this.cardObjectManager.SetGroupObjectPosition(3, i, 0, new Vector3(-1.36+(i*0.4525), 0.05, 0.90));
             this.cardObjectManager.SetGroupCardPosition(3, i, 0, new Vector3(0, 0.01, 0));
             this.cardObjectManager.SetGroupCardPosition(3, i, 1, new Vector3(0, 0.001, -0.20));
             //set restriction details

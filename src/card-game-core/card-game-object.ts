@@ -186,7 +186,7 @@ export class CardObjectManager extends Entity
         tmp.addComponent(new Transform
         ({
             position: new Vector3(0.5*index,0.11,1.5),
-            scale: new Vector3(0.12,0.18,0.12),
+            scale: new Vector3(0.14,0.18,0.14),
             rotation: new Quaternion().setEuler(0,0,0)
         }));
 
@@ -266,7 +266,7 @@ export class CardGroupObject extends Entity
         //create collider object
         this.collisionObject = new Entity();
         this.collisionObject.setParent(this);
-        this.collisionObject.addComponent(new BoxShape());
+        this.collisionObject.addComponent(new BoxShape()).withCollisions = false;
         this.collisionObject.addComponent(CardObjectManager.cardInteractionMaterialSelected);
         this.collisionObject.addComponent(new Transform
         ({
@@ -399,7 +399,7 @@ export class CardObject extends Entity
         //create collision object
         this.collisionObject = new Entity();
         this.collisionObject.setParent(this);
-        this.collisionObject.addComponent(new BoxShape());
+        this.collisionObject.addComponent(new BoxShape()).withCollisions = false;
         this.collisionObject.addComponent(CardObjectManager.cardInteractionMaterialSelected);
         this.collisionObject.addComponent(new Transform
         ({
