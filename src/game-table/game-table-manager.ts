@@ -36,6 +36,7 @@ export class GameTableManager extends Entity
             scale: new Vector3(1,1,1),
             rotation: new Quaternion().setEuler(0,0,0)
         }));
+        engine.addEntity(this);
 
         this.nextIndex = 0;
         

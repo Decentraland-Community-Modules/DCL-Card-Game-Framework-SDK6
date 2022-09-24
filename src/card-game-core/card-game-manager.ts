@@ -13,7 +13,8 @@ import { List, Dictionary } from "../utilities/collections";
 import { CardGameMovementSystem } from "./card-game-movement-system";
 export class CardGameManager
 {
-    isDebugging:boolean = false;
+    isDebugging:boolean = true;
+    gameName:string = "";
     //game's current state
     //  0 -> reset
     //  1 -> in-session
@@ -95,10 +96,20 @@ export class CardGameManager
         this.cardCollectionDict = new Dictionary<CardCollection>();
 
         //initialize scene objects
-        //  TODO: further modify for different card-object sets 
         this.cardObjectManager = new CardObjectManager(parent);
 
         if(this.isDebugging) { log("card game manager - initialized"); }
+    }
+
+    //sets the state of the card game relevent to engine
+    //  adds/removes all systems/entities from the game scene
+    public SetState(state:boolean)
+    {
+        //card/group entities
+        this.cardObjectManager.SetState(state);
+        //movement systems
+        if(state) { engine.addSystem(this.movementSystem); }
+        else { engine.removeSystem(this.movementSystem); }
     }
 
     //adds a card collection of the given type
@@ -262,9 +273,7 @@ export class CardGameManager
         }
         //  add card to group
         this.GetCollection(groupType,groupIndex).AddCard(card);
-
-
-        if(this.isDebugging) { log("card game manager - CHECK"); }
+        
         //move card's object
         //  instant movement
         if(skipAnimation)

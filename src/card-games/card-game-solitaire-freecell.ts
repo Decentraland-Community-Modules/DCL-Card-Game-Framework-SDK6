@@ -1,4 +1,4 @@
-/*      FREECELL SOLITAIRE GAMING TABLE
+/*      FREECELL SOLITAIRE CARD GAME MANAGER
     represents the logic/game rules of the game of solitaire, freecell style. 
     this game must be hosted via the game table module. 
 */
@@ -7,7 +7,7 @@
 import { Card } from "src/card-game-core/card";
 import { CardCollection } from "src/card-game-core/card-collection";
 import { CardGameManager } from "src/card-game-core/card-game-manager";
-export class SolitaireFreeCellManager extends CardGameManager
+export class CardGameManagerSolitaireFreeCell extends CardGameManager
 {
     //number of free zones available for use when moving large stacks
     //  free cells 
@@ -24,7 +24,8 @@ export class SolitaireFreeCellManager extends CardGameManager
     {
         //base constructor
         super(parent);
-        if(this.isDebugging) { log("solitaireFC manager - initializing"); }
+        this.gameName = "FreeCell";
+        if(this.isDebugging) { log("solitaire manager - initializing"); }
 
         this.textGameState = textGameState;
         this.textGameState.value = "Initializing...";
@@ -83,13 +84,13 @@ export class SolitaireFreeCellManager extends CardGameManager
             this.GetCollection(3, i).placementTypeSecondary = 0;
         }
         this.textGameState.value = "Initialized...";
-        if(this.isDebugging) { log("solitaireFC manager - initialized"); }
+        if(this.isDebugging) { log("solitaire manager - initialized"); }
     }
 
     //begins a new game, shuffling deck and placing cards
     public NewGame()
     {
-        if(this.isDebugging) { log("solitaireFC manager - new game starting"); }
+        if(this.isDebugging) { log("solitaire manager - new game starting"); }
         this.textGameState.value = "Starting New Game...";
         //set defualt state
         this.Reset();
@@ -104,14 +105,11 @@ export class SolitaireFreeCellManager extends CardGameManager
         //sort all cards across all standard playzones
         let house:number;
         let value:number;
-        if(this.isDebugging) { log("solitaireFC manager - deck size "+this.GetCollection(0,0).cardList.size().toString()); }
+        if(this.isDebugging) { log("solitaire manager - deck size "+this.GetCollection(0,0).cardList.size().toString()); }
         for (let i = 0; i < this.GetCollection(0,0).cardList.size(); i++) 
         {
-            if(this.isDebugging) { log("solitaireFC manager - "+i.toString()); }
             house = this.GetCardFromCollection(0,0,i).House;
-            if(this.isDebugging) { log("solitaireFC manager - H:"+house.toString()); }
             value = this.GetCardFromCollection(0,0,i).Value;
-            if(this.isDebugging) { log("solitaireFC manager - V:"+value.toString()); }
             this.MoveCard
             (
                 0,
@@ -120,21 +118,20 @@ export class SolitaireFreeCellManager extends CardGameManager
                 3,
                 i%8
             );
-            if(this.isDebugging) { log("solitaireFC manager - placed"); }
         }
 
         //display all valid moves
         this.DisplayMoves();
         this.textGameState.value = "In Progress";
 
-        if(this.isDebugging) { log("solitaireFC manager - new game started"); }
+        if(this.isDebugging) { log("solitaire manager - new game started"); }
     }
 
     //creates a preview of all possible moves available with the currently selected card, highlighting all moves
     //  this function contains all rules regarding card placement on the table and checking victory conditions
     public DisplayMoves()
     {
-        if(this.isDebugging) { log("solitaireFC manager - displaying all possible selections"); }
+        if(this.isDebugging) { log("solitaire manager - displaying all possible selections"); }
         let card:Card;
         let collection:CardCollection;
 
@@ -142,33 +139,21 @@ export class SolitaireFreeCellManager extends CardGameManager
         //  all groups
         for (let i = 0; i < this.cardStacks.size(); i++) 
         {
-            //if interaction enabled, disable
-            if(this.GetGroupObject(2, i).stateInteraction)
-            {
-                this.GetGroupObject(2, i).SetInteractionState(false);
-                this.GetGroupObject(2, i).SetInteractionViewState(false);
-            }
+            this.GetGroupObject(2, i).SetInteractionState(false);
+            this.GetGroupObject(2, i).SetInteractionViewState(false);
         }
         for (let i = 0; i < this.cardSlides.size(); i++) 
         {
-            //if interaction enabled, disable
-            if(this.GetGroupObject(3, i).stateInteraction)
-            {
-                this.GetGroupObject(3, i).SetInteractionState(false);
-                this.GetGroupObject(3, i).SetInteractionViewState(false);
-            }
+            this.GetGroupObject(3, i).SetInteractionState(false);
+            this.GetGroupObject(3, i).SetInteractionViewState(false);
         }
         //  all cards, processing by house and value
         for (let i = 0; i < Card.STRINGS_HOUSES.length; i++) 
         {
             for (let j = 0; j < Card.STRINGS_VALUES.length; j++) 
             {
-                //if interaction enabled, disable
-                if(this.GetCardObject(0, i, j).stateInteraction)
-                {
-                    this.GetCardObject(0, i, j).SetInteractionState(false);
-                    this.GetCardObject(0, i, j).SetInteractionViewState(false);
-                }
+                this.GetCardObject(0, i, j).SetInteractionState(false);
+                this.GetCardObject(0, i, j).SetInteractionViewState(false);
             }
         }
 
@@ -332,14 +317,14 @@ export class SolitaireFreeCellManager extends CardGameManager
             }
         }
 
-        if(this.isDebugging) { log("solitaireFC manager - displayed all possible selections"); }
+        if(this.isDebugging) { log("solitaire manager - displayed all possible selections"); }
     }
 
     //selects the given group
     //  this function handles game rules for what happens when the player clicks on a card group
     public SelectGroup(type:number, index:number)
     {
-        if(this.isDebugging) { log("solitaireFC manager - selecting group "+CardCollection.STRINGS_TYPES[type]+":"+index.toString()); }
+        if(this.isDebugging) { log("solitaire manager - selecting group "+CardCollection.STRINGS_TYPES[type]+":"+index.toString()); }
         //check all stacks
         let card:Card;
         let collection:CardCollection;
@@ -351,7 +336,7 @@ export class SolitaireFreeCellManager extends CardGameManager
                 //take in current card to position
                 this.MoveCard(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue, type, index, false);
                 this.DeselectCard();
-                if(this.isDebugging) { log("solitaireFC manager - selected card has entered end zone"); }
+                if(this.isDebugging) { log("solitaire manager - selected card has entered end zone"); }
             }
             //if group is freezone
             else
@@ -380,7 +365,7 @@ export class SolitaireFreeCellManager extends CardGameManager
                     this.MoveCard(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue, type, index, false);
                     this.DeselectCard();
                 }
-                if(this.isDebugging) { log("solitaireFC manager - selected card has entered free zone"); }
+                if(this.isDebugging) { log("solitaire manager - selected card has entered free zone"); }
             }
         }
         //check all slides
@@ -391,11 +376,22 @@ export class SolitaireFreeCellManager extends CardGameManager
             collection = this.GetCollection(this.GetCurrentCardData().groupType, this.GetCurrentCardData().groupIndex); //process collection of current group
             let tarPos:number = this.GetCurrentCardData().groupPosition;
             let checkVal:number = this.GetCurrentCardCollection().cardList.size(); //required b.c anchoring card get swapped during process
-            if(this.isDebugging) { log("solitaireFC manager - depth move params:"+tarPos.toString()+", "+checkVal.toString()); }
+            if(this.isDebugging) { log("solitaire manager - depth move params:"+tarPos.toString()+", "+checkVal.toString()); }
             for (let i = this.GetCurrentCardData().groupPosition; i < checkVal; i++) 
             {
-                //get next card
-                card = collection.cardList.getItem(tarPos);
+                //use the positional from the card, list indexing changes via fill on-removal
+                card = collection.cardList.getItem(0);   //first card by default
+                for (let j = 0; j < collection.cardList.size(); j++) 
+                {
+                    if(this.isDebugging) { log("solitaire manager - depth["+i.toString()+"] pos:"+collection.cardList.getItem(j).groupPosition.toString()); }
+
+                    if(collection.cardList.getItem(j).groupPosition == i)
+                    {
+                        card = collection.cardList.getItem(j);
+                        break;
+                    } 
+                }
+                if(this.isDebugging) { log("solitaire manager - depth["+tarPos.toString()+"] move:"+Card.STRINGS_VALUES[card.Value]+" of "+Card.STRINGS_HOUSES[card.House]); }
 
                 //move card
                 this.MoveCard(card.Deck, card.House, card.Value, type, index, false);
@@ -405,14 +401,14 @@ export class SolitaireFreeCellManager extends CardGameManager
         }
         //update display for all valid moves
         this.DisplayMoves();
-        if(this.isDebugging) { log("solitaireFC manager - selected group "+CardCollection.STRINGS_TYPES[type]+":"+index.toString()); }
+        if(this.isDebugging) { log("solitaire manager - selected group "+CardCollection.STRINGS_TYPES[type]+":"+index.toString()); }
     }
 
     //selects the given card
     //  this function handles game rules for what happens when the player clicks on a card
     public SelectCard(deck:number, house:number, value:number)
     {
-        if(this.isDebugging) { log("solitaireFC manager - selecting card "+deck.toString()+":"+Card.STRINGS_VALUES[value]+" of "+Card.STRINGS_HOUSES[house]); }
+        if(this.isDebugging) { log("solitaire manager - selecting card "+deck.toString()+":"+Card.STRINGS_VALUES[value]+" of "+Card.STRINGS_HOUSES[house]); }
         
         //if no card is selected, select all cards under this card
         let card:Card;
@@ -473,12 +469,23 @@ export class SolitaireFreeCellManager extends CardGameManager
             collection = this.GetCollection(this.GetCurrentCardData().groupType, this.GetCurrentCardData().groupIndex); //process collection of current group
             let tarPos:number = this.GetCurrentCardData().groupPosition;
             let checkVal:number = this.GetCurrentCardCollection().cardList.size(); //required b.c anchoring card get swapped during process
-            if(this.isDebugging) { log("solitaireFC manager - depth move params:"+tarPos.toString()+", "+checkVal.toString()); }
+            let offset:number = 0;
+            if(this.isDebugging) { log("solitaire manager - depth move params:"+tarPos.toString()+", "+checkVal.toString()); }
             for (let i = this.GetCurrentCardData().groupPosition; i < checkVal; i++) 
             {
-                //get next card
-                cardTmp = collection.cardList.getItem(tarPos);
-                if(this.isDebugging) { log("solitaireFC manager - depth move:"+Card.STRINGS_VALUES[cardTmp.Value]+" of "+Card.STRINGS_HOUSES[cardTmp.House]); }
+                //use the positional from the card, list indexing changes via fill on-removal
+                cardTmp = collection.cardList.getItem(0);   //first card by default
+                for (let j = 0; j < collection.cardList.size(); j++) 
+                {
+                    if(this.isDebugging) { log("solitaire manager - depth["+i.toString()+"] pos:"+collection.cardList.getItem(j).groupPosition.toString()); }
+
+                    if(collection.cardList.getItem(j).groupPosition == i)
+                    {
+                        cardTmp = collection.cardList.getItem(j);
+                        break;
+                    } 
+                }
+                if(this.isDebugging) { log("solitaire manager - depth["+i.toString()+"] move:"+Card.STRINGS_VALUES[cardTmp.Value]+" of "+Card.STRINGS_HOUSES[cardTmp.House]); }
 
                 //move card
                 this.MoveCard(cardTmp.Deck, cardTmp.House, cardTmp.Value, card.groupType, card.groupIndex, false);
@@ -488,7 +495,7 @@ export class SolitaireFreeCellManager extends CardGameManager
         }
         //update display for all valid moves
         this.DisplayMoves();
-        if(this.isDebugging) { log("solitaireFC manager - selected card "+deck.toString()+":"+Card.STRINGS_VALUES[value]+" of "+Card.STRINGS_HOUSES[house]); }
+        if(this.isDebugging) { log("solitaire manager - selected card "+deck.toString()+":"+Card.STRINGS_VALUES[value]+" of "+Card.STRINGS_HOUSES[house]); }
     }
 
     //deselects the currently selected card

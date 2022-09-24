@@ -14,6 +14,10 @@ import { Card } from "./card";
 import { List, Dictionary } from "../utilities/collections";
 export class CardObjectManager extends Entity
 {
+    isDebugging:boolean = true;
+    //table this manager is linked to
+    table:Entity;
+
     //texture paths/materials used by system to display cards
     public static objectSetTag:String = "debuggingSet";
     public static objectModelPaths:string[] = 
@@ -43,6 +47,7 @@ export class CardObjectManager extends Entity
     constructor(parent:Entity)
     {
         super();
+        this.table = parent;
 
         //if static material components have not yet been initialized
         if(CardObjectManager.cardTexture == undefined || CardObjectManager.cardTexture == null)
@@ -54,7 +59,7 @@ export class CardObjectManager extends Entity
             //create card interaction materials
             //  card selected
             CardObjectManager.cardInteractionMaterialSelected = new Material();
-            CardObjectManager.cardInteractionMaterialSelected.albedoColor = new Color4(1.0, 1.0, 0.0, 0.25);
+            CardObjectManager.cardInteractionMaterialSelected.albedoColor = new Color4(1.0, 1.0, 0.0, 0.5);
             //  invisible
             CardObjectManager.cardInteractionMaterialInvisible = new Material();
             CardObjectManager.cardInteractionMaterialInvisible.albedoColor = new Color4(0.0, 0.0, 0.0, 0.0);
@@ -74,6 +79,58 @@ export class CardObjectManager extends Entity
         this.groupObjectDict = new Dictionary<CardGroupObject>();
         this.cardObjectList = new List<CardObject>();
         this.cardObjectDict = new Dictionary<CardObject>();
+    }
+
+    //sets the state of the card game relevent to engine
+    //  adds/removes all systems/entities from the game scene
+    //  this can break the on-going game and should only really 
+    //  be called when starting a new game or changing game types
+    public SetState(state:boolean)
+    {
+        if(state)
+        {
+            if(this.isDebugging) { log("card game object manager - enabling all group and card objects"); }
+            //all group objects
+            for (let i = 0; i < this.groupObjectList.size(); i++) 
+            {
+                if(!this.groupObjectList.getItem(i).isAddedToEngine())
+                {
+                    this.groupObjectList.getItem(i).SetInteractionState(false);
+                    this.groupObjectList.getItem(i).SetInteractionViewState(false);
+                    engine.addEntity(this.groupObjectList.getItem(i)); 
+                }
+            }
+            //all card objects
+            for (let i = 0; i < this.cardObjectList.size(); i++) 
+            {
+                //if(!this.cardObjectList.getItem(i).isAddedToEngine()) 
+                this.cardObjectList.getItem(i).SetInteractionState(false);
+                this.cardObjectList.getItem(i).SetInteractionViewState(false);
+                engine.addEntity(this.cardObjectList.getItem(i)); 
+            }
+        }
+        else
+        {
+            if(this.isDebugging) { log("card game object manager - disabling all group and card objects"); }
+            //all group objects
+            for (let i = 0; i < this.groupObjectList.size(); i++) 
+            {
+                if(this.groupObjectList.getItem(i).isAddedToEngine())
+                {
+                    this.groupObjectList.getItem(i).SetInteractionState(false);
+                    this.groupObjectList.getItem(i).SetInteractionViewState(false);
+                    engine.removeEntity(this.groupObjectList.getItem(i));
+                }
+            }
+            //all card objects
+            for (let i = 0; i < this.cardObjectList.size(); i++) 
+            {
+                //if(this.cardObjectList.getItem(i).isAddedToEngine()) 
+                this.cardObjectList.getItem(i).SetInteractionState(false);
+                this.cardObjectList.getItem(i).SetInteractionViewState(false);
+                engine.removeEntity(this.cardObjectList.getItem(i)); 
+            }
+        }
     }
 
     //adds a card parent object, returns created object
@@ -270,18 +327,13 @@ export class CardGroupObject extends Entity
         //enable interaction
         if(state)// && !this.stateInteraction)
         {
-            engine.addEntity(this.collisionObject);
-            this.collisionObject.setParent(this);
-            this.collisionObject.getComponent(Transform).position = new Vector3();
-
+            if(!this.collisionObject.isAddedToEngine()) engine.addEntity(this.collisionObject);
             this.stateInteraction = true;
         }
         //disable interaction
         else if(!state)// && this.stateInteraction)
         {
-            this.collisionObject.setParent(null);
-            engine.removeEntity(this.collisionObject);
-
+            if(this.collisionObject.isAddedToEngine()) engine.removeEntity(this.collisionObject);
             this.stateInteraction = false;
         }
     }
@@ -295,7 +347,6 @@ export class CardGroupObject extends Entity
         {
             this.collisionObject.removeComponent(Material);
             this.collisionObject.addComponent(CardObjectManager.cardInteractionMaterialSelected);
-
             this.stateInteractionView = true;
         }
         //changes view to hide view interaction object
@@ -303,7 +354,6 @@ export class CardGroupObject extends Entity
         {
             this.collisionObject.removeComponent(Material);
             this.collisionObject.addComponent(CardObjectManager.cardInteractionMaterialInvisible);
-
             this.stateInteractionView = false;
         }
     }
@@ -312,6 +362,9 @@ export class CardGroupObject extends Entity
 //object representation of a single card within the game
 export class CardObject extends Entity
 {
+    //true when this card is face up
+    faceState:boolean;
+
     //sitting variables
     //  this is optimization of processing at the cost of storage
     //  to ensure we are not attempting to re-add components to the engine (and visa versa)
@@ -333,6 +386,8 @@ export class CardObject extends Entity
     {
         super();
 
+        this.faceState = true;
+
         this.stateInteraction = true;
         this.stateInteractionView = true;
 
@@ -349,13 +404,29 @@ export class CardObject extends Entity
         this.collisionObject.addComponent(new Transform
         ({
             position: new Vector3(0,0,0),
-            scale: new Vector3(1,1,0.01),
+            scale: new Vector3(1,1,0.1),
             rotation: new Quaternion().setEuler(0,0,0)
         }));
-
+        
         //set default interaction state and view
         this.SetInteractionState(false);
         this.SetInteractionViewState(false);
+    }
+
+    //sets the face state of the card object, uses rotation to control display
+    //TODO: it's likely this will need to be redone to hard-lock card visibility
+    //  maybe using a blank holder object to display a card that should be facedown to avoid face-peeking 
+    public SetFaceState(state:boolean)
+    {
+        this.faceState = state
+        if(this.faceState)
+        {
+            this.getComponent(Transform).rotation = new Vector3(180,-90,0).toQuaternion();
+        }
+        else
+        {
+            this.getComponent(Transform).rotation = new Vector3(0,90,0).toQuaternion();
+        }
     }
 
     //sets the current state of the card's interaction object
@@ -364,17 +435,13 @@ export class CardObject extends Entity
         //enable interaction
         if(state)// && !this.stateInteraction)
         {
-            engine.addEntity(this.collisionObject);
-            this.collisionObject.setParent(this);
-
+            if(!this.collisionObject.isAddedToEngine()) engine.addEntity(this.collisionObject);
             this.stateInteractionView = true;
         }
         //disable interaction
         else if(!state)// && this.stateInteraction)
         {
-            this.collisionObject.setParent(null);
-            engine.removeEntity(this.collisionObject);
-
+            if(this.collisionObject.isAddedToEngine()) engine.removeEntity(this.collisionObject);
             this.stateInteractionView = false;
         }
     }
@@ -388,7 +455,6 @@ export class CardObject extends Entity
         {
             this.collisionObject.removeComponent(Material);
             this.collisionObject.addComponent(CardObjectManager.cardInteractionMaterialSelected);
-
             this.stateInteractionView = true;
         }
         //changes view to hide view interaction object
@@ -396,7 +462,6 @@ export class CardObject extends Entity
         {
             this.collisionObject.removeComponent(Material);
             this.collisionObject.addComponent(CardObjectManager.cardInteractionMaterialInvisible);
-
             this.stateInteractionView = false;
         }
     }

@@ -20,12 +20,10 @@
     networking interfaces.
 */
 //imports
-
 import { GameTableManager } from "./game-table/game-table-manager";
 
 //DEMO CODE:
 //  create and add table manager
 const gameTableManager = new GameTableManager();
-engine.addEntity(gameTableManager);
 //  create a single game table in the middle of the scene
 gameTableManager.CreateGameTable(new Vector3(0,0,0));

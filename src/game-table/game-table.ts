@@ -1,6 +1,7 @@
-import { CardGameManager } from "src/card-game-core/card-game-manager";
-import { SolitaireFreeCellManager } from "src/card-game-solitaire-freecell/table-solitaire-freecell";
 import { MenuGroup3D } from "src/utilities/menu-group-3D";
+import { CardGameManager } from "src/card-game-core/card-game-manager";
+import { CardGameManagerSolitairePatience } from "src/card-games/card-game-patience";
+import { CardGameManagerSolitaireFreeCell } from "src/card-games/card-game-solitaire-freecell";
 
 /*      TABLE GAME
     represents an object in the game scene that hosts games for players. each table
@@ -24,19 +25,23 @@ import { MenuGroup3D } from "src/utilities/menu-group-3D";
 */
 export class GameTable extends Entity
 {
-    private isDebugging:boolean = false;
+    private isDebugging:boolean = true;
     //identity index
     private index:number; get Index() { return this.index; }
     //selected game
-    private currentGame:number; get CurrentGame() { return this.currentGame; }
-
-    //2D menu objects
+    private gameCurrent:number; get CurrentGame() { return this.gameCurrent; }
 
     //3D menu objects
     menuGroup3D:MenuGroup3D = new MenuGroup3D(this);
 
     //3D cosmetic objects (table/chairs)
     vanityTable:Entity = new Entity();
+
+    //this must be equal to the number of games currently packed into the module
+    gameCount:number = 2;
+    //
+    gameManagerS:CardGameManagerSolitaireFreeCell;
+    gameManagerP:CardGameManagerSolitairePatience;
 
     //game manager is defined as the core class,
     //  but should be initialized as the card game management class that is in-session
@@ -56,10 +61,10 @@ export class GameTable extends Entity
             scale: new Vector3(1,1,1),
             rotation: new Quaternion().setEuler(0,0,0)
         }));
+        engine.addEntity(this);
 
         //set identity
         this.index = index;
-        this.currentGame = 0;
 
         //set up 3D menu
         //  menu toggle
@@ -87,7 +92,7 @@ export class GameTable extends Entity
         this.menuGroup3D.AdjustMenuObject("Type", 0, new Vector3(0,3.2,0));
         this.menuGroup3D.AdjustMenuObject("Type", 1, new Vector3(0.925,0.5,1));
         //      game name text
-        this.menuGroup3D.AddMenuText("Type", "TypeName", "FreeCell Solitaire");
+        this.menuGroup3D.AddMenuText("Type", "TypeName", "GAME_TYPE");
         this.menuGroup3D.AdjustTextDisplay("Type", "TypeName", 0, 6);
         this.menuGroup3D.AdjustTextObject("Type", "TypeName", 1, new Vector3(0.8,2,0.8));
         //  game type next button
@@ -107,7 +112,11 @@ export class GameTable extends Entity
             (
                 (e) =>
                 {
-                    //TODO: implement mode swapping when there are more game modes
+                    if(this.isDebugging) { log("game table "+index.toString()+" - selecting next game"); }
+                    //select next game
+                    if(this.gameCurrent+1 == this.gameCount) this.SelectGame(0);
+                    else this.SelectGame(this.gameCurrent+1);
+                    if(this.isDebugging) { log("game table "+index.toString()+" - selected next game"); }
                 },
                 {
                     button: ActionButton.ANY,
@@ -134,7 +143,11 @@ export class GameTable extends Entity
             (
                 (e) =>
                 {
-                    //TODO: implement mode swapping when there are more game modes
+                    if(this.isDebugging) { log("game table "+index.toString()+" - selecting prev game"); }
+                    //select previous game
+                    if(this.gameCurrent == 0) this.SelectGame(this.gameCount-1);
+                    else this.SelectGame(this.gameCurrent-1);
+                    if(this.isDebugging) { log("game table "+index.toString()+" - selected prev game"); }
                 },
                 {
                     button: ActionButton.ANY,
@@ -147,8 +160,8 @@ export class GameTable extends Entity
         //  primary action button (play/reset)
         //      object
         this.menuGroup3D.AddMenuObject("PrimaryAction", 2);
-        this.menuGroup3D.AdjustMenuObject("PrimaryAction", 0, new Vector3(0,2,0));
-        this.menuGroup3D.AdjustMenuObject("PrimaryAction", 1, new Vector3(0.5,0.5,0.5));
+        this.menuGroup3D.AdjustMenuObject("PrimaryAction", 0, new Vector3(1.6,2,0));
+        this.menuGroup3D.AdjustMenuObject("PrimaryAction", 1, new Vector3(0.5,0.5,1));
         //      title text
         this.menuGroup3D.AddMenuText("PrimaryAction", "PrimaryActionName", "PLAY");
         this.menuGroup3D.AdjustTextDisplay("PrimaryAction", "PrimaryActionName", 0, 8);
@@ -172,6 +185,36 @@ export class GameTable extends Entity
                 }
             )
         );
+        //  secondary action button (play/reset)
+        //      object
+        this.menuGroup3D.AddMenuObject("SecondaryAction", 2);
+        this.menuGroup3D.AdjustMenuObject("SecondaryAction", 0, new Vector3(-1.6,2,0));
+        this.menuGroup3D.AdjustMenuObject("SecondaryAction", 1, new Vector3(0.5,0.5,1));
+        //      title text
+        this.menuGroup3D.AddMenuText("SecondaryAction", "SecondaryActionName", "UNDO");
+        this.menuGroup3D.AdjustTextDisplay("SecondaryAction", "SecondaryActionName", 0, 8);
+        this.menuGroup3D.AdjustTextObject("SecondaryAction", "SecondaryActionName", 0, new Vector3(0,0,0));
+        this.menuGroup3D.AdjustTextObject("SecondaryAction", "SecondaryActionName", 1, new Vector3(2,2,2));
+        //  primary action: play/reset game
+        this.menuGroup3D.GetMenuObject("SecondaryAction").addComponent
+        (
+            //add click action listener
+            new OnPointerDown
+            (
+                (e) =>
+                {
+                    if(this.swap) { this.swap = false; }
+                    else { this.swap = true; }
+                    this.gameManager.SetState(this.swap);
+                },
+                {
+                    button: ActionButton.ANY,
+                    showFeedback: true,
+                    hoverText: "[E] UNDO",
+                    distance: 8
+                }
+            )
+        );
 
         //set up cosmetics display
         this.vanityTable.setParent(this);
@@ -183,10 +226,25 @@ export class GameTable extends Entity
             rotation: new Quaternion().setEuler(0,0,0)
         }));
 
-        //create and host a new game default game instance
-        this.gameManager = new SolitaireFreeCellManager(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
+        //create an instance for every card game this table can host
+        // this front-loads all processing to the first scene load and removes objects from engine to save room
+        //  solitaire - patience
+        this.gameManagerS = new CardGameManagerSolitaireFreeCell(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
+        this.gameManagerS.SetState(false);
+        //  solitaire - patience
+        this.gameManagerP = new CardGameManagerSolitairePatience(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
+        this.gameManagerP.SetState(false);
+
+        //set default starting game
+        this.gameCurrent = -1;
+        this.gameManager = this.gameManagerS;
+        this.SelectGame(1);
+        this.SelectGame(0);
+
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - initialized"); }
     }
+
+    swap:boolean = true;
 
     //displays all available games connected to this table
     public DisplayAvailableGames()
@@ -199,21 +257,28 @@ export class GameTable extends Entity
     {
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - selecting game type "+selection.toString()); }
         //ignore requests to select the same game type, no need to regenerate an existing game
-        if(this.currentGame != selection)
+        if(this.gameCurrent != selection)
         {
-            //TODO: clean up and remove previous card game objects
+            //clean up previous game
+            this.gameManager.SetState(false);
 
             //change targeted game
-            this.currentGame = selection;
+            this.gameCurrent = selection;
 
             //initialize game manager based on demanded game type
-            switch(this.currentGame)
+            switch(this.gameCurrent)
             {
                 //solitaire - free cell
                 case 0:
-                    this.gameManager = new SolitaireFreeCellManager(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
+                    this.gameManager = this.gameManagerS;
+                break;
+                //solitaire - patience
+                case 1:
+                    this.gameManager = this.gameManagerP;
                 break;
             }
+            this.menuGroup3D.SetMenuText("Type", "TypeName", this.gameManager.gameName);
+            this.gameManager.SetState(true);
         }
 
         //start a new game for this game type
@@ -228,11 +293,15 @@ export class GameTable extends Entity
     {
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - starting new game"); }
         //create new game through casting based on type
-        switch(this.currentGame)
+        switch(this.gameCurrent)
         {
             //solitaire - free cell
             case 0:
-                (this.gameManager as SolitaireFreeCellManager).NewGame();
+                (this.gameManager as CardGameManagerSolitaireFreeCell).NewGame();
+            break;
+            //solitaire - patience
+            case 1:
+                (this.gameManager as CardGameManagerSolitairePatience).NewGame();
             break;
         }
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - started new game"); }
