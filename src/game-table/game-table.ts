@@ -25,7 +25,7 @@ import { CardGameManagerSolitaireFreeCell } from "src/card-games/card-game-solit
 */
 export class GameTable extends Entity
 {
-    private isDebugging:boolean = true;
+    private isDebugging:boolean = false;
     //identity index
     private index:number; get Index() { return this.index; }
     //selected game
