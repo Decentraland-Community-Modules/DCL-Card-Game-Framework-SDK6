@@ -19,7 +19,9 @@ File Overview:
 You can find more information inside each of these files. Most files also contain heavy log text that is visible in your browser's console (just toggle isDebugging=true).
 
 TODO LIST:
+
 -add move tracing to allow for undoing previously commited moves
+
 
 If you run into any issues or have ideas for future expansion of this module, send me an e-mail at: 
   thecryptotrader69@gmail.com
