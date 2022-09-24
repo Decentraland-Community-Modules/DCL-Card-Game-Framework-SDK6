@@ -14,7 +14,7 @@ import { Card } from "./card";
 import { List, Dictionary } from "../utilities/collections";
 export class CardObjectManager extends Entity
 {
-    isDebugging:boolean = true;
+    isDebugging:boolean = false;
     //table this manager is linked to
     table:Entity;
 
