@@ -20,11 +20,11 @@ You can find more information inside each of these files. Most files also contai
 
 TODO LIST:
 
--add move tracing to allow for undoing previously commited moves
+-add move tracing to allow for undoing previously commited moves (likely base-class and then customized for each individual card game)
 
 BUG LIST:
 
--some more collision error found, should be solved if toggle off raycast collisions for card objects when selection is not available
+-currently no known bugs
 
 If you run into any issues or have ideas for future expansion of this module, send me an e-mail at: 
   thecryptotrader69@gmail.com
