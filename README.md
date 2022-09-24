@@ -20,8 +20,8 @@ You can find more information inside each of these files. Most files also contai
 
 TODO LIST:
 
--add move tracing to allow for undoing previously commited moves (likely base-class and then customized for each individual card game)
--add 2D menu that explains the rules of each game, so users do not need to look them up online (some of these games have many variations as well)
+	add move tracing to allow for undoing previously commited moves (likely base-class and then customized for each individual card game)
+	add 2D menu that explains the rules of each game, so users do not need to look them up online (some of these games have many variations as well)
 
 BUG LIST:
 
