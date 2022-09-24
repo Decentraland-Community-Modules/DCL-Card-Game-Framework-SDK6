@@ -13,7 +13,7 @@ import { List, Dictionary } from "../utilities/collections";
 import { CardGameMovementSystem } from "./card-game-movement-system";
 export class CardGameManager
 {
-    isDebugging:boolean = true;
+    isDebugging:boolean = false;
     gameName:string = "";
     //game's current state
     //  0 -> reset
