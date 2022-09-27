@@ -59,7 +59,7 @@ export class CardObjectManager extends Entity
             //create card interaction materials
             //  card selected
             CardObjectManager.cardInteractionMaterialSelected = new Material();
-            CardObjectManager.cardInteractionMaterialSelected.albedoColor = new Color4(1.0, 1.0, 0.0, 0.5);
+            CardObjectManager.cardInteractionMaterialSelected.albedoColor = new Color4(1.0, 1.0, 0.0, 0.25);
             //  invisible
             CardObjectManager.cardInteractionMaterialInvisible = new Material();
             CardObjectManager.cardInteractionMaterialInvisible.albedoColor = new Color4(0.0, 0.0, 0.0, 0.0);

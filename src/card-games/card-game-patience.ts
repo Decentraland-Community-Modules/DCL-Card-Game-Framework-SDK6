@@ -318,9 +318,9 @@ export class CardGameManagerSolitairePatience extends CardGameManager
             //check playzone for valid placement
             for (let i = 0; i < this.cardSlides.size(); i++) 
             {
-                //playzone contains no cards, allow movement
+                //playzone contains no cards, allow movement if current card is a king
                 collection = this.cardSlides.getItem(i);
-                if(collection.cardList.size() == 0)
+                if(collection.cardList.size() == 0 && this.cardCurrentValue == 12)
                 {
                     //update group object interactions
                     this.GetGroupObject(3, i).SetInteractionState(true);
@@ -433,6 +433,15 @@ export class CardGameManagerSolitairePatience extends CardGameManager
                 //move card
                 this.MoveCard(cardTmp.Deck, cardTmp.House, cardTmp.Value, type, index, false);
             }
+
+            //if a card remains
+            if(collection.cardList.size() > 0)
+            {
+                //flip new top card upright
+                cardTmp = collection.cardList.getItem(collection.cardList.size()-1);
+                this.GetCardObject(cardTmp.Deck, cardTmp.House, cardTmp.Value).SetFaceState(true);
+            }
+
             //deselect current card
             this.DeselectCard();
         }

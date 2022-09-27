@@ -1,8 +1,3 @@
-import { MenuGroup3D } from "src/utilities/menu-group-3D";
-import { CardGameManager } from "src/card-game-core/card-game-manager";
-import { CardGameManagerSolitairePatience } from "src/card-games/card-game-patience";
-import { CardGameManagerSolitaireFreeCell } from "src/card-games/card-game-solitaire-freecell";
-
 /*      TABLE GAME
     represents an object in the game scene that hosts games for players. each table
     contains its own settings menu, controller for specific games and registry for 
@@ -23,6 +18,12 @@ import { CardGameManagerSolitaireFreeCell } from "src/card-games/card-game-solit
     regenerate all their data/objects.
         
 */
+import { data_card_game } from "src/card-games/card-game-defs";
+import { MenuGroup2D } from "src/utilities/menu-group-2D";
+import { MenuGroup3D } from "src/utilities/menu-group-3D";
+import { CardGameManager } from "src/card-game-core/card-game-manager";
+import { CardGameManagerSolitairePatience } from "src/card-games/card-game-patience";
+import { CardGameManagerSolitaireFreeCell } from "src/card-games/card-game-solitaire-freecell";
 export class GameTable extends Entity
 {
     private isDebugging:boolean = false;
@@ -31,15 +32,16 @@ export class GameTable extends Entity
     //selected game
     private gameCurrent:number; get CurrentGame() { return this.gameCurrent; }
 
+    //2D menu objects
+    menuGroup2D:MenuGroup2D = new MenuGroup2D(this);
+
     //3D menu objects
     menuGroup3D:MenuGroup3D = new MenuGroup3D(this);
 
     //3D cosmetic objects (table/chairs)
     vanityTable:Entity = new Entity();
 
-    //this must be equal to the number of games currently packed into the module
-    gameCount:number = 2;
-    //
+    //all incorporated game types
     gameManagerS:CardGameManagerSolitaireFreeCell;
     gameManagerP:CardGameManagerSolitairePatience;
 
@@ -65,6 +67,90 @@ export class GameTable extends Entity
 
         //set identity
         this.index = index;
+
+        //set up 2D menu
+        //  menu toggle
+        this.menuGroup2D.AdjustMenuToggle(0, new Vector3(1.2,0.05,-1.6));
+        this.menuGroup2D.AdjustMenuToggle(1, new Vector3(0.2,0.2,0.2));
+        //  background
+        //      object
+        this.menuGroup2D.AddMenuObject("Background");
+        this.menuGroup2D.AdjustMenuObject("Background", 1, new Vector2(800,600));
+        this.menuGroup2D.AdjustMenuColour("Background", new Color4(0.2, 0.2, 0.2, 1));
+        //  title
+        //      bakcground object
+        this.menuGroup2D.AddMenuObject("TitleBg");
+        this.menuGroup2D.AdjustMenuObject("TitleBg", 0, new Vector2(0,30));
+        this.menuGroup2D.AdjustMenuObject("TitleBg", 1, new Vector2(600,80));
+        this.menuGroup2D.AdjustMenuObject("TitleBg", 2, new Vector2(1,0));
+        this.menuGroup2D.AdjustMenuColour("TitleBg", new Color4(0.2, 0.2, 0.2, 1));
+        //      object
+        this.menuGroup2D.AddMenuObject("Title");
+        this.menuGroup2D.AdjustMenuObject("Title", 0, new Vector2(0,20));
+        this.menuGroup2D.AdjustMenuObject("Title", 1, new Vector2(580,60));
+        this.menuGroup2D.AdjustMenuObject("Title", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("Title", "Text", "GAME_TITLE_TEXT");
+        this.menuGroup2D.AdjustTextDisplay("Title", "Text", 0, 40);
+        //  desc short head
+        //      object
+        this.menuGroup2D.AddMenuObject("DescShortHead");
+        this.menuGroup2D.AdjustMenuObject("DescShortHead", 0, new Vector2(-320,-60));
+        this.menuGroup2D.AdjustMenuObject("DescShortHead", 1, new Vector2(120,40));
+        this.menuGroup2D.AdjustMenuObject("DescShortHead", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("DescShortHead", "Text", "About:");
+        this.menuGroup2D.AdjustTextDisplay("DescShortHead", "Text", 0, 30);
+        //  desc short body
+        //      object
+        this.menuGroup2D.AddMenuObject("DescShortBody");
+        this.menuGroup2D.AdjustMenuObject("DescShortBody", 0, new Vector2(0,-102.5));
+        this.menuGroup2D.AdjustMenuObject("DescShortBody", 1, new Vector2(760,120));
+        this.menuGroup2D.AdjustMenuObject("DescShortBody", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("DescShortBody", "Text", data_card_game[0].DescShort);
+        this.menuGroup2D.AdjustTextObject("DescShortBody", "Text", 3, new Vector2(0,1));
+        this.menuGroup2D.AdjustTextDisplay("DescShortBody", "Text", 0, 18);
+        //  desc win head
+        //      object
+        this.menuGroup2D.AddMenuObject("DescWinHead");
+        this.menuGroup2D.AdjustMenuObject("DescWinHead", 0, new Vector2(-320,-240));
+        this.menuGroup2D.AdjustMenuObject("DescWinHead", 1, new Vector2(120,40));
+        this.menuGroup2D.AdjustMenuObject("DescWinHead", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("DescWinHead", "Text", "Goal:");
+        this.menuGroup2D.AdjustTextDisplay("DescWinHead", "Text", 0, 30);
+        //  desc win body
+        //      object
+        this.menuGroup2D.AddMenuObject("DescWinBody");
+        this.menuGroup2D.AdjustMenuObject("DescWinBody", 0, new Vector2(0,-282.5));
+        this.menuGroup2D.AdjustMenuObject("DescWinBody", 1, new Vector2(760,40));
+        this.menuGroup2D.AdjustMenuObject("DescWinBody", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("DescWinBody", "Text", data_card_game[0].descWin);
+        this.menuGroup2D.AdjustTextObject("DescWinBody", "Text", 3, new Vector2(0,1));
+        this.menuGroup2D.AdjustTextDisplay("DescWinBody", "Text", 0, 18);
+        //  desc rules head
+        //      object
+        this.menuGroup2D.AddMenuObject("DescRulesHead");
+        this.menuGroup2D.AdjustMenuObject("DescRulesHead", 0, new Vector2(-320,-340));
+        this.menuGroup2D.AdjustMenuObject("DescRulesHead", 1, new Vector2(120,40));
+        this.menuGroup2D.AdjustMenuObject("DescRulesHead", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("DescRulesHead", "Text", "Rules:");
+        this.menuGroup2D.AdjustTextDisplay("DescRulesHead", "Text", 0, 30);
+        //  desc rules body
+        //      object
+        this.menuGroup2D.AddMenuObject("DescRulesBody");
+        this.menuGroup2D.AdjustMenuObject("DescRulesBody", 0, new Vector2(0,-382.5));
+        this.menuGroup2D.AdjustMenuObject("DescRulesBody", 1, new Vector2(760,200));
+        this.menuGroup2D.AdjustMenuObject("DescRulesBody", 2, new Vector2(1,0));
+        //      text
+        this.menuGroup2D.AddMenuText("DescRulesBody", "Text", "RULES_TEXT");
+        this.menuGroup2D.AdjustTextObject("DescRulesBody", "Text", 3, new Vector2(0,1));
+        this.menuGroup2D.AdjustTextDisplay("DescRulesBody", "Text", 0, 18);
+        //final call: button
+        this.menuGroup2D.PrepareMenuClose();
 
         //set up 3D menu
         //  menu toggle
@@ -114,7 +200,7 @@ export class GameTable extends Entity
                 {
                     if(this.isDebugging) { log("game table "+index.toString()+" - selecting next game"); }
                     //select next game
-                    if(this.gameCurrent+1 == this.gameCount) this.SelectGame(0);
+                    if(this.gameCurrent+1 == data_card_game.length) this.SelectGame(0);
                     else this.SelectGame(this.gameCurrent+1);
                     if(this.isDebugging) { log("game table "+index.toString()+" - selected next game"); }
                 },
@@ -145,7 +231,7 @@ export class GameTable extends Entity
                 {
                     if(this.isDebugging) { log("game table "+index.toString()+" - selecting prev game"); }
                     //select previous game
-                    if(this.gameCurrent == 0) this.SelectGame(this.gameCount-1);
+                    if(this.gameCurrent == 0) this.SelectGame(data_card_game.length-1);
                     else this.SelectGame(this.gameCurrent-1);
                     if(this.isDebugging) { log("game table "+index.toString()+" - selected prev game"); }
                 },
@@ -161,6 +247,7 @@ export class GameTable extends Entity
         //      object
         this.menuGroup3D.AddMenuObject("PrimaryAction", 2);
         this.menuGroup3D.AdjustMenuObject("PrimaryAction", 0, new Vector3(1.6,2,0));
+        this.menuGroup3D.AdjustMenuObject("PrimaryAction", 0, new Vector3(0,2,0));
         this.menuGroup3D.AdjustMenuObject("PrimaryAction", 1, new Vector3(0.5,0.5,1));
         //      title text
         this.menuGroup3D.AddMenuText("PrimaryAction", "PrimaryActionName", "PLAY");
@@ -187,7 +274,7 @@ export class GameTable extends Entity
         );
         //  secondary action button (play/reset)
         //      object
-        this.menuGroup3D.AddMenuObject("SecondaryAction", 2);
+        /*this.menuGroup3D.AddMenuObject("SecondaryAction", 2);
         this.menuGroup3D.AdjustMenuObject("SecondaryAction", 0, new Vector3(-1.6,2,0));
         this.menuGroup3D.AdjustMenuObject("SecondaryAction", 1, new Vector3(0.5,0.5,1));
         //      title text
@@ -214,7 +301,7 @@ export class GameTable extends Entity
                     distance: 8
                 }
             )
-        );
+        );*/
 
         //set up cosmetics display
         this.vanityTable.setParent(this);
@@ -277,8 +364,28 @@ export class GameTable extends Entity
                     this.gameManager = this.gameManagerP;
                 break;
             }
-            this.menuGroup3D.SetMenuText("Type", "TypeName", this.gameManager.gameName);
+            this.menuGroup3D.SetMenuText("Type", "TypeName", data_card_game[this.gameCurrent].name);
             this.gameManager.SetState(true);
+
+            //update game info menu
+            //  title
+            //      text
+            this.menuGroup2D.SetMenuText("Title", "Text", data_card_game[this.gameCurrent].name);
+            //  desc short body
+            //      text
+            this.menuGroup2D.SetMenuText("DescShortBody", "Text", data_card_game[this.gameCurrent].DescShort);
+            //  desc win body
+            //      text
+            this.menuGroup2D.SetMenuText("DescWinBody", "Text", data_card_game[this.gameCurrent].descWin);
+            //  desc rules body
+            //      text
+            let str:string = "";
+            for(let i=0; i<data_card_game[this.gameCurrent].descRules.length; i++)
+            {
+                str += i.toString()+": "+data_card_game[this.gameCurrent].descRules[i];
+                if(i != data_card_game[this.gameCurrent].descRules.length-1) str += "\n";
+            }
+            this.menuGroup2D.SetMenuText("DescRulesBody", "Text", str);
         }
 
         //start a new game for this game type

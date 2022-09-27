@@ -36,24 +36,32 @@
         this.items[pos] = instance;
      }
 
+     //removes the selected element from the list, maintaining the order of elements
      removeItem(value: T): void {
-         //shift selected element to last spot in array
-         var i:number = 0;
-         while(i < this.items.length)
-         {
-             //if item is found
-             if(this.items[i] == value)
-             {
-                 //overwrite targeted item
-                 this.items[i] = this.items[this.items.length-1];
-                 //remove duplicate item from end
-                 this.items.pop();
-                 break;
-             }
-             //force next case
-             i++;
-         }
-     }
+        //shift selected element to last spot in array
+        var i:number = 0;
+        var tmp:T;
+        while(i < this.items.length)
+        {
+            //if end of list
+            if(i == this.items.length-1)
+            {
+                this.items.pop();
+                return;
+            }
+
+            //if item is found
+            if(this.items[i] == value)
+            {
+                //swap targeted element with next element in list
+                tmp = this.items[i];
+                this.items[i] = this.items[i+1];
+                this.items[i+1] = tmp;
+            }
+            //force next case
+            i++;
+        }
+    }
  }
  export { Dictionary };
  export default class Dictionary<T> implements IKeyCollection<T> 

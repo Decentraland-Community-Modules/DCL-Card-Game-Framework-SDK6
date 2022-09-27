@@ -1,6 +1,6 @@
 /*      MENU GROUP 3D
     used to create a 3d menu group in the game scene. menu objects can be created and 
-    organized through an instance of this module.
+    organized through an instance of this manager.
 
     the menu group and toggle button are placed as parents of the object given, all
     menu objects are parented onto the menu group, and all text shape entities are
@@ -116,10 +116,10 @@ export class MenuGroup3D extends Entity
 
     //prepares a menu object of the given size/shape, with the given text, 
     //  registered under the given name
-    public AddMenuObject(name:string, index:number)
+    public AddMenuObject(name:string, type:number)
     {
         //create and prepare entities
-        var tmp:MenuObject3D = new MenuObject3D(this.object_locations[index], name);
+        var tmp:MenuObject3D = new MenuObject3D(this.object_locations[type], name);
         tmp.setParent(this);
 
         //register object to collections
