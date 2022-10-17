@@ -116,8 +116,35 @@ export class CardCollection
         this.cardDict.removeItem(card.Key);
     }
 
+    //takes in a card and places it into the position of another card,
+    //exiling the out-card. this is mainly useful for player hands when selecting 
+    //a card to pick up while hand is full. card out will have to be moved in a seperate function
+    //  cardIn is the card entering this collection, must be removed from it's previous collection already
+    //  cardOut is the card exiting this collection, must be a part of this collection
+    public SwapCard(cardIn:Card, cardOut:Card)
+    {
+        //place card in
+        //change card's group identity
+        cardIn.groupType = this.type;
+        cardIn.groupIndex = this.index;
+        cardIn.groupPosition = cardOut.groupPosition;
+        //add to collections
+        this.cardList.assignItem(cardOut.groupPosition, cardIn);
+        this.cardDict.addItem(cardIn.Key, cardIn);
+
+        //remove cardout
+        //change card's group identity
+        cardOut.groupType = -1;
+        cardOut.groupIndex = -1;
+        cardOut.groupPosition = -1;
+        //remove from collections
+        //this.cardList.removeItem(cardOut); //card is already removed through reassignment
+        this.cardDict.removeItem(cardOut.Key);
+    }
+
     //randomly rearrange the cards within this collection
-    public ShuffleCards()
+    //  LEGACY: card shuffling has been moved to card-game-manager to support multi-deck games
+    /*public ShuffleCards()
     {
         if(this.isDebugging) { log("card collection - "+CardCollection.STRINGS_TYPES[this.type]+":"+this.index+" cards shuffling"); }
         //shift cards in list by randomly removing and adding cards to the list
@@ -125,7 +152,6 @@ export class CardCollection
         let swap:number;
         let count = this.cardList.size();
         if(this.isDebugging) { log("card collection - size:"+count.toString()); }
-        
         for (let i = 0; i < count; i++) 
         {
             //determine slot to be swapped
@@ -140,5 +166,5 @@ export class CardCollection
             this.cardList.assignItem(swap, card);
         }
         if(this.isDebugging) { log("card collection - "+CardCollection.STRINGS_TYPES[this.type]+":"+this.index+" cards shuffled"); }
-    }
+    }*/
 }

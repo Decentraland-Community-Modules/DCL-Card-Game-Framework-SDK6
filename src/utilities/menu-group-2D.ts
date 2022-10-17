@@ -38,12 +38,12 @@ export class MenuGroup2D extends Entity
 
         //set up menu toggle
         this.menuToggle.setParent(parent);
-        this.menuToggle.addComponent(new GLTFShape("models/utilities/menuObjSettingsGearBox.glb"));
+        this.menuToggle.addComponent(new GLTFShape("models/utilities/menuObjSettingsAbout.glb"));
         this.menuToggle.addComponent(new Transform
         ({
             position: new Vector3(0,0,0),
             scale: new Vector3(1,1,1),
-            rotation: new Quaternion().setEuler(0,0,0)
+            rotation: new Quaternion().setEuler(0,180,0)
         }));
         //  primary action: toggle
         this.menuToggle.addComponent

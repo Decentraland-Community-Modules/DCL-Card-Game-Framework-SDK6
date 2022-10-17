@@ -4,26 +4,30 @@
     player groups.
 
     to add a new game to the table:
-        1) create a new class derived from the card game manager class. your new class will
+        1) create a new class derived from the CardGameManager class. your new class will
     require you to create the card groups and turn logic required to run a game.
-        2) modify SelectGame() and NewGame() functions, simply add the class you created to
-    the switch cases with the correct initialization and recast repsectively.
+        2) add your CardGameManager to the GameTable:
+            -add an additional def to card-game-defs.ts file, fill in your game's details
+            -add an instance of your class to GameTable (under 'incorporated games')
+            -add an initialization of your class to the constructor (near end of function)
+            -modify SelectGame(), adding your class to the switch table 
+            -modify NewGame(), adding your class to the switch table
 
     NOTES: 
         currently this module is not networked, so tables can only support single 
     player games.
-        it's likely that both card data and object repositories will be pulled up from the 
-    card game manager class into this class when additional game types are implemented. this
-    could cut down on the scene strain when changing game types, as each game would not need to
-    regenerate all their data/objects.
-        
 */
 import { data_card_game } from "src/card-games/card-game-defs";
 import { MenuGroup2D } from "src/utilities/menu-group-2D";
 import { MenuGroup3D } from "src/utilities/menu-group-3D";
+import { CardGameResources } from "src/card-game-core/card-game-resources";
 import { CardGameManager } from "src/card-game-core/card-game-manager";
 import { CardGameManagerSolitairePatience } from "src/card-games/card-game-patience";
 import { CardGameManagerSolitaireFreeCell } from "src/card-games/card-game-solitaire-freecell";
+import { CardGameManagerSolitaireSpider } from "src/card-games/card-game-spider";
+import { CardGameManagerSolitaireAccordion } from "src/card-games/card-game-accordion";
+import { CardGameManagerSolitairePyramid } from "src/card-games/card-game-pyramid";
+import { CardGameManagerSolitaireTriPeaks } from "src/card-games/card-game-tri-peaks";
 export class GameTable extends Entity
 {
     private isDebugging:boolean = false;
@@ -41,9 +45,16 @@ export class GameTable extends Entity
     //3D cosmetic objects (table/chairs)
     vanityTable:Entity = new Entity();
 
-    //all incorporated game types
-    gameManagerS:CardGameManagerSolitaireFreeCell;
-    gameManagerP:CardGameManagerSolitairePatience;
+    //resource manager
+    gameResources:CardGameResources;
+
+    //incorporated games
+    gameManagerFreeCell:CardGameManagerSolitaireFreeCell;
+    gameManagerPatience:CardGameManagerSolitairePatience;
+    gameManagerSpider:CardGameManagerSolitaireSpider;
+    gameManagerAccordion:CardGameManagerSolitaireAccordion;
+    gameManagerPyramid:CardGameManagerSolitairePyramid;
+    gameManagerTriPeaks:CardGameManagerSolitaireTriPeaks;
 
     //game manager is defined as the core class,
     //  but should be initialized as the card game management class that is in-session
@@ -313,20 +324,43 @@ export class GameTable extends Entity
             rotation: new Quaternion().setEuler(0,0,0)
         }));
 
+        //create resource manager
+        this.gameResources = new CardGameResources(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
+
         //create an instance for every card game this table can host
         // this front-loads all processing to the first scene load and removes objects from engine to save room
         //  solitaire - patience
-        this.gameManagerS = new CardGameManagerSolitaireFreeCell(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
-        this.gameManagerS.SetState(false);
+        this.gameManagerFreeCell = new CardGameManagerSolitaireFreeCell(this.gameResources);
+        this.gameManagerFreeCell.SetState(false);
         //  solitaire - patience
-        this.gameManagerP = new CardGameManagerSolitairePatience(this, this.menuGroup3D.GetMenuObjectText("Title", "TableState").getComponent(TextShape));
-        this.gameManagerP.SetState(false);
+        this.gameManagerPatience = new CardGameManagerSolitairePatience(this.gameResources);
+        this.gameManagerPatience.SetState(false);
+        //  solitaire - spider
+        this.gameManagerSpider = new CardGameManagerSolitaireSpider(this.gameResources);
+        this.gameManagerSpider.SetState(false);
+        //  solitaire - accordion
+        this.gameManagerAccordion = new CardGameManagerSolitaireAccordion(this.gameResources);
+        this.gameManagerAccordion.SetState(false);
+        //  solitaire - pyramid
+        this.gameManagerPyramid = new CardGameManagerSolitairePyramid(this.gameResources);
+        this.gameManagerPyramid.SetState(false);
+        //  solitaire - tri peaks
+        this.gameManagerTriPeaks = new CardGameManagerSolitaireTriPeaks(this.gameResources);
+        this.gameManagerTriPeaks.SetState(false);
 
         //set default starting game
         this.gameCurrent = -1;
-        this.gameManager = this.gameManagerS;
-        this.SelectGame(1);
-        this.SelectGame(0);
+        this.gameManager = this.gameManagerFreeCell;
+
+        //asset warm up
+        //  this front-loads all asset creation to reduce lag during game swaps
+        for(let i=0; i<data_card_game.length; i++)
+        {
+            this.SelectGame(data_card_game.length-i-1);
+        }
+
+        //debugging selection test (safe to remove)
+        //this.SelectGame(2);
 
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - initialized"); }
     }
@@ -357,28 +391,38 @@ export class GameTable extends Entity
             {
                 //solitaire - free cell
                 case 0:
-                    this.gameManager = this.gameManagerS;
+                    this.gameManager = this.gameManagerFreeCell;
                 break;
                 //solitaire - patience
                 case 1:
-                    this.gameManager = this.gameManagerP;
+                    this.gameManager = this.gameManagerPatience;
+                break;
+                //solitaire - spider
+                case 2:
+                    this.gameManager = this.gameManagerSpider;
+                break;
+                //solitaire - accordion
+                case 3:
+                    this.gameManager = this.gameManagerAccordion;
+                break;
+                //solitaire - pyramid
+                case 4:
+                    this.gameManager = this.gameManagerPyramid;
+                break;
+                //solitaire - tri peaks
+                case 5:
+                    this.gameManager = this.gameManagerTriPeaks;
                 break;
             }
-            this.menuGroup3D.SetMenuText("Type", "TypeName", data_card_game[this.gameCurrent].name);
-            this.gameManager.SetState(true);
 
-            //update game info menu
-            //  title
-            //      text
+            //update table 3d display
+            this.menuGroup3D.SetMenuText("Type", "TypeName", data_card_game[this.gameCurrent].name);
+
+            //update table 2d display
             this.menuGroup2D.SetMenuText("Title", "Text", data_card_game[this.gameCurrent].name);
-            //  desc short body
-            //      text
             this.menuGroup2D.SetMenuText("DescShortBody", "Text", data_card_game[this.gameCurrent].DescShort);
-            //  desc win body
-            //      text
             this.menuGroup2D.SetMenuText("DescWinBody", "Text", data_card_game[this.gameCurrent].descWin);
             //  desc rules body
-            //      text
             let str:string = "";
             for(let i=0; i<data_card_game[this.gameCurrent].descRules.length; i++)
             {
@@ -386,6 +430,28 @@ export class GameTable extends Entity
                 if(i != data_card_game[this.gameCurrent].descRules.length-1) str += "\n";
             }
             this.menuGroup2D.SetMenuText("DescRulesBody", "Text", str);
+
+            //set delgates for current manager
+            this.gameResources.GetCurrentCardData = this.gameManager.GetCurrentCardData;
+            this.gameResources.GetCurrentCardCollection = this.gameManager.GetCurrentCardCollection;
+            this.gameResources.GetCollection = this.gameManager.GetCollection;
+            this.gameResources.GetCardFromCollection = this.gameManager.GetCardFromCollection;
+            this.gameResources.DisplayMoves = this.gameManager.DisplayMoves;
+            this.gameResources.SelectCard = this.gameManager.SelectCard;
+            this.gameResources.SelectGroup = this.gameManager.SelectGroup;
+            this.gameResources.MoveCard = this.gameManager.MoveCard;
+            this.gameResources.GetCardData = this.gameManager.GetCardData;
+            this.gameResources.GetCardObject = this.gameManager.GetCardObject;
+            this.gameResources.GetGroupObject = this.gameManager.GetGroupObject;
+            this.gameResources.ApplyCardSelection = this.gameManager.ApplyCardSelection;
+            this.gameResources.DeselectCard = this.gameManager.DeselectCard;
+
+            //reset resources and activate movement system
+            this.gameResources.Reset();
+            engine.addSystem(this.gameResources.movementSystem);
+
+            //initialize newly selected manager
+            this.gameManager.Initialize();
         }
 
         //start a new game for this game type
@@ -393,24 +459,11 @@ export class GameTable extends Entity
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - selected game type "+selection.toString()); }
     }
 
-    //begins a new game of the currently selected game type
-    //  we're using casting instead of <e> types here simply b.c they are more common-place and 
-    //  easier to understand.
+    //begins a new game of the currently selected game
     public NewGame()
     {
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - starting new game"); }
-        //create new game through casting based on type
-        switch(this.gameCurrent)
-        {
-            //solitaire - free cell
-            case 0:
-                (this.gameManager as CardGameManagerSolitaireFreeCell).NewGame();
-            break;
-            //solitaire - patience
-            case 1:
-                (this.gameManager as CardGameManagerSolitairePatience).NewGame();
-            break;
-        }
+        this.gameManager.NewGame();
         if(this.isDebugging) { log("game table "+this.Index.toString()+" - started new game"); }
     }
 }

@@ -1,13 +1,12 @@
-/*      PATIENCE SOLITAIRE CARD GAME MANAGER
-    represents the logic/game rules of the game of solitaire, patience style. 
-    this game must be hosted via the game table module. 
-    -it's called patience because you really need patience to soak the 12.5% win ratio-
+/*      SPIDER SOLITAIRE CARD GAME MANAGER
+    represents the logic/game rules of the game of solitaire, spider style. 
+    this game must be hosted via the game table module.
 */
 import { Card } from "src/card-game-core/card";
 import { CardCollection } from "src/card-game-core/card-collection";
 import { CardGameManager } from "src/card-game-core/card-game-manager";
 import { CardGameResources } from "src/card-game-core/card-game-resources";
-export class CardGameManagerSolitairePatience extends CardGameManager
+export class CardGameManagerSolitaireSpider extends CardGameManager
 {
     //constructor
     constructor(res:CardGameResources)
@@ -22,18 +21,18 @@ export class CardGameManagerSolitairePatience extends CardGameManager
         if(this.isDebugging) { log("solitaire manager - initializing"); }
         this.textGameState.value = "Initializing...";
         //set board's scale
-        this.cardObjectManager.getComponent(Transform).scale = new Vector3(1, 1, 1);
+        this.cardObjectManager.getComponent(Transform).scale = new Vector3(0.75, 0.75, 0.75);
 
         //create required collections
-        //  1 card deck
-        this.resources.SetRequiredCollections(0, 1);
-        //  6 stacks: 4 endzones, 1 deck, 1 discard
-        this.resources.SetRequiredCollections(2, 6);
+        //  2 card decks
+        this.resources.SetRequiredCollections(0, 2);
+        //  9 stacks: 8 endzones, 1 deck remains
+        this.resources.SetRequiredCollections(2, 9);
         //      position endzones
-        for (let i = 0; i < 4; i++) 
+        for (let i = 0; i < 8; i++) 
         {
             //set object position details
-            this.cardObjectManager.SetGroupObjectPosition(2, i, 0, new Vector3(1.36-(i*0.4525), 0.05, 1.45));
+            this.cardObjectManager.SetGroupObjectPosition(2, i, 0, new Vector3(1.8-(i*0.4), 0.10, 1.75));
             this.cardObjectManager.SetGroupCardPosition(2, i, 0, new Vector3(0, 0.01, 0));
             this.cardObjectManager.SetGroupCardPosition(2, i, 1, new Vector3(0, 0.001, 0));
             //set restriction details
@@ -42,33 +41,29 @@ export class CardGameManagerSolitairePatience extends CardGameManager
             //  only allow a single house in straight order
             this.GetCollection(2, i).placementTypePrimary = 1;
             this.GetCollection(2, i).placementTypeSecondary = i;
-       }
-        //  position deck and discard
-        for (let i = 0; i < 2; i++) 
-        {
-            //set object position details
-            this.cardObjectManager.SetGroupObjectPosition(2, i+4, 0, new Vector3(-1.36+(i*0.4525), 0.05, 1.45));
-            this.cardObjectManager.SetGroupCardPosition(2, i+4, 0, new Vector3(0, 0.01, 0));
-            //positioning is sperate for deck vs discard stacks
-            if(i == 0) this.cardObjectManager.SetGroupCardPosition(2, i+4, 1, new Vector3(0, 0.00, 0));
-            if(i == 1) this.cardObjectManager.SetGroupCardPosition(2, i+4, 1, new Vector3(0, 0.001, 0));
-            //set restriction details
-            //  change card limit
-            this.GetCollection(2, i).cardMaxCount = 1;
-            //  change visibility
-            this.GetCollection(2, i).visibilityType = 1;
-            //  only allow a single house in straight order
-            this.GetCollection(2, i).placementTypePrimary = 0;
-            this.GetCollection(2, i).placementTypeSecondary = 0;
         }
-        //  7 slides playing field
-        this.resources.SetRequiredCollections(3, 7);
-        for (let i = 0; i < 7; i++) 
+        //      position deck remains
+        for (let i = 0; i < 1; i++) 
         {
             //set object position details
-            this.cardObjectManager.SetGroupObjectPosition(3, i, 0, new Vector3(-1.36+(i*0.4525), 0.05, 0.90));
+            this.cardObjectManager.SetGroupObjectPosition(2, i+8, 0, new Vector3(-1.8, 0.10, 1.75));
+            this.cardObjectManager.SetGroupCardPosition(2, i+8, 0, new Vector3(0, 0.01, 0));
+            this.cardObjectManager.SetGroupCardPosition(2, i+8, 1, new Vector3(0, 0.001, 0));
+            //set restriction details
+            //  change visibility
+            this.GetCollection(2, i+8).visibilityType = 1;
+            //  only allow a single house in straight order
+            this.GetCollection(2, i+8).placementTypePrimary = 0;
+            this.GetCollection(2, i+8).placementTypeSecondary = 0;
+        }
+        //  10 slides for playing fields
+        this.resources.SetRequiredCollections(3, 10);
+        for (let i = 0; i < 10; i++) 
+        {
+            //set object position details
+            this.cardObjectManager.SetGroupObjectPosition(3, i, 0, new Vector3(-1.8+(i*0.4), 0.10, 0.90));
             this.cardObjectManager.SetGroupCardPosition(3, i, 0, new Vector3(0, 0.01, 0));
-            this.cardObjectManager.SetGroupCardPosition(3, i, 1, new Vector3(0, 0.001, -0.20));
+            this.cardObjectManager.SetGroupCardPosition(3, i, 1, new Vector3(0, 0.001, -0.15));
             //set restriction details
             //  change visibility
             this.GetCollection(3, i).visibilityType = 1;
@@ -92,7 +87,7 @@ export class CardGameManagerSolitairePatience extends CardGameManager
         //shuffle cards
         this.ShuffleCards();
 
-        //place cards across standard playzones
+        //sort required cards across standard playzones
         let card:Card;
         let count:number = 0;
         let size:number = 0;
@@ -100,12 +95,12 @@ export class CardGameManagerSolitairePatience extends CardGameManager
         for (let i = 0; i < this.countSlide; i++) 
         {
             //add next amount of cards to current slide
-            size++;
+            if(i < 4) { size = 6; } else { size = 5; }
             for (let j = 0; j < size; j++) 
             {
                 //get next card from deck
                 card = this.cardList.getItem(count);
-                this.MoveCard(card.Deck, card.House, card.Value, 3, i%7);
+                this.MoveCard(card.Deck, card.House, card.Value, 3, i);
                 //all cards hidden, except those at the end of the slide
                 if(j == size-1) this.GetCardObject(card.Deck, card.House, card.Value).SetFaceState(true);
                 else this.GetCardObject(card.Deck, card.House, card.Value).SetFaceState(false);
@@ -115,11 +110,12 @@ export class CardGameManagerSolitairePatience extends CardGameManager
         }
 
         //push remaining cards into deck stack
+        if(this.isDebugging) { log("solitaire manager - number of cards used "+count.toString()); }
         for (let i = count; i < this.cardList.size(); i++) 
         {
             //get next card from deck
             card = this.cardList.getItem(i);
-            this.MoveCard(card.Deck, card.House, card.Value, 2, 4);
+            this.MoveCard(card.Deck, card.House, card.Value, 2, 8);
             //all cards hidden
             this.GetCardObject(card.Deck, card.House, card.Value).SetFaceState(false);
         }
@@ -160,63 +156,117 @@ export class CardGameManagerSolitairePatience extends CardGameManager
         }
 
         //check for win condition
-        //check if each endzone stack is full
-        let victory:Boolean = true;
-        for (let i = 0; i < 4; i++) 
+        //check for a full set (ace to king) of the same house for removal into endzone
+        //  process each slide group
+        for (let i = 0; i < this.countSlide; i++) 
         {
-            if(this.GetCollection(2,i).cardList.size() < 13)
+            //ensure group has a card available, dont bother with slides that cannot have a full set
+            collection = this.cardSlides.getItem(i);
+            let cardPrev:Card;
+            let cardTmp:Card;
+            let tarPos:number = 0;
+            let setFull:boolean = false;
+            if(collection.cardList.size() > 12)
             {
-                victory = false;
+                //ensure first card is ace
+                if(collection.cardList.getItem(collection.cardList.size()-1).Value != 0)
+                {
+                    break;
+                }
+
+                //conduct depth check for full set
+                for (let d = 1; d < collection.cardList.size(); d++) 
+                {
+                    //get next card
+                    card = collection.cardList.getItem(collection.cardList.size()-1-d); //card closer to base
+                    cardPrev = collection.cardList.getItem(collection.cardList.size()-d); //card closer to slide top
+                    //check for valid procession of face-up cards
+                    if(this.GetCardObject(card.Deck, card.House, card.Value).faceState && card.House == cardPrev.House && (cardPrev.Value+1) == card.Value)
+                    {
+                        //if current card is king, then set is full
+                        if(card.Value == 12)
+                        {
+                            setFull = true;
+                            tarPos = card.groupPosition;
+                        }
+                        break;
+                    }
+                    else 
+                    {
+                        break;
+                    }
+                }
+        
+                //if set is found
+                if(setFull)
+                {
+                    //get next available endzone
+                    let endzonePos:number = 0;
+                    for (let i = 0; i < 8; i++) 
+                    {
+                        //get next endzone
+                        if(this.GetCollection(2,i).cardList.size() == 0)
+                        {
+                            break;
+                        }
+                        endzonePos++;
+                    }
+
+                    //move all cards in full set to target endzone
+                    //  preform movement based on depth
+                    let checkVal:number = this.GetCurrentCardCollection().cardList.size(); //required b.c anchoring card get swapped during process
+                    if(this.isDebugging) { log("solitaire manager - moving full set, depth move params:"+tarPos.toString()+", "+checkVal.toString()); }
+                    for (let i = this.GetCurrentCardData().groupPosition; i < checkVal; i++) 
+                    {
+                        //use the positional from the card, list indexing changes via fill on-removal
+                        cardTmp = collection.cardList.getItem(0);   //first card by default
+                        for (let j = 0; j < collection.cardList.size(); j++) 
+                        {
+                            if(this.isDebugging) { log("solitaire manager - moving full set, depth["+i.toString()+"] pos:"+collection.cardList.getItem(j).groupPosition.toString()); }
+
+                            if(collection.cardList.getItem(j).groupPosition == i)
+                            {
+                                cardTmp = collection.cardList.getItem(j);
+                                break;
+                            } 
+                        }
+                        if(this.isDebugging) { log("solitaire manager - moving full set, depth["+tarPos.toString()+"] move:"+Card.STRINGS_VALUES[cardTmp.Value]+" of "+Card.STRINGS_HOUSES[cardTmp.House]); }
+
+                        //move card
+                        this.MoveCard(cardTmp.Deck, cardTmp.House, cardTmp.Value, 2, i, false);
+                    }
+
+                    //if a card remains
+                    if(collection.cardList.size() > 0)
+                    {
+                        //flip new top card upright
+                        cardTmp = collection.cardList.getItem(collection.cardList.size()-1);
+                        this.GetCardObject(cardTmp.Deck, cardTmp.House, cardTmp.Value).SetFaceState(true);
+                    }
+
+                    //deselect current card
+                    this.DeselectCard();
+
+                    //if endzone was final, set victory
+                    if(endzonePos == 7)
+                    {
+                        this.textGameState.value = "Victory!";
+                        return;
+                    }
+                }
             }
-        }
-        if(victory)
-        {
-            this.textGameState.value = "Victory!";
-            return;
         }
 
         //if no card is selected
         if(this.cardCurrentDeck == -1)
         {
-            //top card in endzone/deck/discard tiles are valid
-            //  process each stack group
-            for (let i = 0; i < this.countStack; i++) 
+            //endzone is not interactable
+            //  process deck stack
+            collection = this.cardStacks.getItem(8);
+            if(collection.cardList.size() > 0)
             {
-                //get card from top of stack
-                collection = this.cardStacks.getItem(i);
-                card = collection.cardList.getItem(collection.cardList.size()-1);
-                //endzones stack
-                if(i < 4)
-                {
-                    //ensure group has a card available
-                    if(collection.cardList.size() > 0)
-                    {
-                        //update card object interactions
-                        this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(true);
-                        this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionViewState(true);
-                    }
-                }
-                //deck stack
-                else if(i == 4)
-                {
-                    //ensure cards still remain in deck
-                    if(collection.cardList.size() > 0)
-                    {
-                        this.GetGroupObject(2, i).SetInteractionState(true);
-                        this.GetGroupObject(2, i).SetInteractionViewState(true);
-                    }
-                }
-                //discard stack
-                else
-                {
-                    //ensure group has a card available
-                    if(collection.cardList.size() > 0)
-                    {
-                        //update card object interactions
-                        this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(true);
-                        this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionViewState(true);
-                    }
-                }
+                this.GetGroupObject(2, 8).SetInteractionState(true);
+                this.GetGroupObject(2, 8).SetInteractionViewState(true);
             }
             //  process each slide group
             for (let i = 0; i < this.countSlide; i++) 
@@ -237,10 +287,10 @@ export class CardGameManagerSolitairePatience extends CardGameManager
                     for (let i = 1; i < collection.cardList.size(); i++) 
                     {
                         //get next card
-                        card = collection.cardList.getItem(collection.cardList.size()-1-i);
-                        cardPrev = collection.cardList.getItem(collection.cardList.size()-i);
+                        card = collection.cardList.getItem(collection.cardList.size()-1-i); //card closer to base
+                        cardPrev = collection.cardList.getItem(collection.cardList.size()-i); //card closer to slide top
                         //check for valid procession of face-up cards
-                        if(Card.HOUSE_COLOUR[card.House] != Card.HOUSE_COLOUR[cardPrev.House] && (cardPrev.Value+1) == card.Value && this.GetCardObject(0, card.House, card.Value).faceState)
+                        if(this.GetCardObject(card.Deck, card.House, card.Value).faceState && card.House == cardPrev.House && (cardPrev.Value+1) == card.Value)
                         {
                             //update card object interactions
                             this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(true);
@@ -251,7 +301,6 @@ export class CardGameManagerSolitairePatience extends CardGameManager
                             break;
                         }
                     }
-
                 }
             }
         }
@@ -262,52 +311,23 @@ export class CardGameManagerSolitairePatience extends CardGameManager
             this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionState(true);
             this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionViewState(true);
 
-            //only enable endzone checks if a SINGLE card is selected
-            if(this.GetCurrentCardData().groupPosition == this.GetCurrentCardCollection().cardList.size()-1)
-            {
-                //check endzones for valid placement
-                for (let i = 0; i < 4; i++) 
-                {
-                    //endzone contains no cards, check current card for ace
-                    collection = this.cardStacks.getItem(i);
-                    if(collection.cardList.size() == 0)
-                    {
-                        if(this.cardCurrentValue == 0)
-                        {
-                            //update group object interactions
-                            this.GetGroupObject(2, i).SetInteractionState(true);
-                            this.GetGroupObject(2, i).SetInteractionViewState(true);
-                        }
-                    }
-                    //endzone contains cards, check for house and value sequence
-                    else
-                    {
-                        card = collection.cardList.getItem(collection.cardList.size()-1);
-                        if(this.cardCurrentHouse == card.House && (this.cardCurrentValue-1) == card.Value)
-                        {
-                            //update group object interactions
-                            this.GetGroupObject(2, i).SetInteractionState(true);
-                            this.GetGroupObject(2, i).SetInteractionViewState(true);
-                        }
-                    }
-                }
-            }
+            //endzone is not interactable
             //check playzone for valid placement
             for (let i = 0; i < this.countSlide; i++) 
             {
                 //playzone contains no cards, allow movement if current card is a king
                 collection = this.cardSlides.getItem(i);
-                if(collection.cardList.size() == 0 && this.cardCurrentValue == 12)
+                if(collection.cardList.size() == 0)
                 {
                     //update group object interactions
                     this.GetGroupObject(3, i).SetInteractionState(true);
                     this.GetGroupObject(3, i).SetInteractionViewState(true);
                 }
-                //playzone contains cards, check for house and value sequence
+                //playzone contains cards, check for value sequence
                 else
                 {
                     card = collection.cardList.getItem(collection.cardList.size()-1);
-                    if(Card.HOUSE_COLOUR[this.cardCurrentHouse] != Card.HOUSE_COLOUR[card.House] && (this.cardCurrentValue+1) == card.Value)
+                    if((this.cardCurrentValue+1) == card.Value)
                     {
                         //update card object interactions
                         this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(true);
@@ -324,65 +344,24 @@ export class CardGameManagerSolitairePatience extends CardGameManager
     public SelectGroup(type:number, index:number)
     {
         if(this.isDebugging) { log("solitaire manager - selecting group "+CardCollection.STRINGS_TYPES[type]+":"+index.toString()); }
-        //check all stacks
         let cardTmp:Card;
         let collection:CardCollection;
-        if(type == 2)
+        //is stacks
+        //  endzone is not interactable
+        //  if selection is deck stack
+        if(type == 2 && index == 8)
         {
             collection = this.GetCollection(type, index);
-            //if group is endzone
-            if(index < 4)
+            //push a single card to each playzone slide from deck stack
+            for (let i = 0; i < this.countSlide; i++) 
             {
-                //grab collection of the current card
-                let collectionPrev:CardCollection = this.GetCollection(this.GetCurrentCardData().groupType, this.GetCurrentCardData().groupIndex);
-
-                //take in current card to position
-                this.MoveCard(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue, type, index, false);
-                this.DeselectCard();
-
-                //if a card remains
-                if(collectionPrev.cardList.size() > 0)
-                {
-                    //flip new top card upright
-                    cardTmp = collectionPrev.cardList.getItem(collectionPrev.cardList.size()-1);
-                    this.GetCardObject(cardTmp.Deck, cardTmp.House, cardTmp.Value).SetFaceState(true);
-                }
-                if(this.isDebugging) { log("solitaire manager - selected card has entered end zone"); }
-            }
-            //if group deck stack
-            else if (index == 4)
-            {
-                //get top card from deck stack
+                //get last card from deck and push it to the slide's top
                 cardTmp = collection.cardList.getItem(collection.cardList.size()-1);
-
-                //flip card upright
+                this.MoveCard(cardTmp.Deck, cardTmp.House, cardTmp.Value, 3, i);
                 this.GetCardObject(cardTmp.Deck, cardTmp.House, cardTmp.Value).SetFaceState(true);
-
-                //move card to discard pile
-                this.MoveCard(cardTmp.Deck, cardTmp.House, cardTmp.Value, 2, 5, false);
-                if(this.isDebugging) { log("solitaire manager - card moved from deck to discard zone"); }
-            }
-            //if group is discard stack
-            else if (index == 5)
-            {
-                //update identity
-                cardTmp = this.GetCardFromCollection(type, index, collection.cardList.size());
-                
-                //select card
-                this.cardCurrentDeck = cardTmp.Deck;
-                this.cardCurrentHouse = cardTmp.House;
-                this.cardCurrentValue = cardTmp.Value;
-
-                //change interaction display state
-                this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionState(true);
-                this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionViewState(true);
-
-                //change card object selection elevation
-                this.ApplyCardSelection(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue, cardTmp.groupType, cardTmp.groupIndex, true);
-                if(this.isDebugging) { log("solitaire manager - card selected from discard zone"); }
             }
         }
-        //check all slides
+        //is slide
         else
         {
             //preform movement based on depth

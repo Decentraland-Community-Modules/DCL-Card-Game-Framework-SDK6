@@ -2,24 +2,28 @@
         base class used to hold all data regarding a card game
     this class should be modified for each specific game, individually
     defining such thing as their player count and collections 
-
-    TODO: create clean-up function to remove all entities and components
-    from the scene, to be used when changing card games.
 */
 import { Card } from "./card";
 import { CardCollection } from "./card-collection";
-import { CardGroupObject, CardObjectManager } from "./card-game-object";
 import { List, Dictionary } from "../utilities/collections";
+import { CardGameResources } from "./card-game-resources";
 import { CardGameMovementSystem } from "./card-game-movement-system";
+import { CardGroupObject, CardObjectManager } from "./card-game-object";
 export class CardGameManager
 {
     isDebugging:boolean = false;
-    gameName:string = "";
-    //game's current state
+
+    //game's current state (this will be used for multiplayer games)
     //  0 -> reset
     //  1 -> in-session
     //  2 -> ended
     gameState:number;
+
+    //number of collections required for this card game
+    get countDeck():number { return this.resources.countDeck };
+    get countHand():number { return this.resources.countHand };
+    get countStack():number { return this.resources.countStack };
+    get countSlide():number { return this.resources.countSlide };
 
     //number of players
     playerCount:number;
@@ -28,28 +32,35 @@ export class CardGameManager
 
     //currently selected card
     //  values are set at '-1' if no card is selected
-    cardCurrentDeck:number;
-    cardCurrentHouse:number;
-    cardCurrentValue:number;
-    public GetCurrentCardCollection()
-    {
-        return this.GetCollection(this.GetCurrentCardData().groupType, this.GetCurrentCardData().groupIndex);
-    }
+    get cardCurrentDeck():number { return this.resources.cardCurrentDeck; }
+    set cardCurrentDeck(val:number) { this.resources.cardCurrentDeck = val; }
+    get cardCurrentHouse():number { return this.resources.cardCurrentHouse; }
+    set cardCurrentHouse(val:number) { this.resources.cardCurrentHouse = val; }
+    get cardCurrentValue():number { return this.resources.cardCurrentValue; }
+    set cardCurrentValue(val:number) { this.resources.cardCurrentValue = val; }
     public GetCurrentCardData()
     {
         return this.GetCollection(0, this.cardCurrentDeck).GetCard(Card.GetKey(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue));
     }
+    public GetCurrentCardCollection()
+    {
+        return this.GetCollection(this.GetCurrentCardData().groupType, this.GetCurrentCardData().groupIndex);
+    }
 
+    //resource manager
+    resources:CardGameResources;
     //data pieces
+    //  all cards
+    get cardList():List<Card> { return this.resources.cardList; }
     //  all cards pools
-    cardDecks:List<CardCollection>;
+    get cardDecks():List<CardCollection> { return this.resources.cardDecks; }
     //  all game collections
-    cardHands:List<CardCollection>;
-    cardStacks:List<CardCollection>;
-    cardSlides:List<CardCollection>;
+    get cardHands():List<CardCollection> { return this.resources.cardHands; }
+    get cardStacks():List<CardCollection> { return this.resources.cardStacks; }
+    get cardSlides():List<CardCollection> { return this.resources.cardSlides; }
     //  dictionary access for all collections
-    cardCollectionList:List<CardCollection>[];
-    cardCollectionDict:Dictionary<CardCollection>;
+    get cardCollectionList():List<CardCollection>[] { return this.resources.cardCollectionList; };;
+    get cardCollectionDict():Dictionary<CardCollection> { return this.resources.cardCollectionDict; };;
     //returns a requested collection
     public GetCollection(type:number, index:number)
     {
@@ -62,22 +73,24 @@ export class CardGameManager
         return this.GetCollection(collectionType, collectionIndex).cardList.getItem(positionIndex);
     }
 
+    //display text used for displaying current game state
+    //  'in-progress/win/loss' should only be seen, but also provides some debugging info if crashes at certain state
+    get textGameState():TextShape  { return this.resources.textGameState; }
+
     //scene objects
-    cardObjectManager:CardObjectManager;
+    get cardObjectManager():CardObjectManager  { return this.resources.cardObjectManager; };
 
     //movement system
-    movementSystem:CardGameMovementSystem;
+    get movementSystem():CardGameMovementSystem  { return this.resources.movementSystem; };
 
     //constructor
     //  this is only the default setup and should be modified when
     //  expanded into a specific game
-    constructor(parent:Entity)
+    constructor(res:CardGameResources)
     {
-        //movement system
-        this.movementSystem = new CardGameMovementSystem();
-        engine.addSystem(this.movementSystem);
-
-        if(this.isDebugging) { log("card game manager - initializing"); }
+        if(this.isDebugging) { log("card game manager - constructing..."); }
+        
+        this.resources = res;
         this.gameState = 0;
 
         this.playerCount = 0;
@@ -87,240 +100,14 @@ export class CardGameManager
         this.cardCurrentHouse = -1;
         this.cardCurrentValue = -1;
 
-        //initialize collections
-        this.cardDecks = new List<CardCollection>();
-        this.cardHands = new List<CardCollection>();
-        this.cardStacks = new List<CardCollection>();
-        this.cardSlides = new List<CardCollection>();
-        this.cardCollectionList = [this.cardDecks, this.cardHands, this.cardStacks, this.cardSlides];
-        this.cardCollectionDict = new Dictionary<CardCollection>();
-
-        //initialize scene objects
-        this.cardObjectManager = new CardObjectManager(parent);
-
-        if(this.isDebugging) { log("card game manager - initialized"); }
+        if(this.isDebugging) { log("card game manager - constructed"); }
     }
 
-    //sets the state of the card game relevent to engine
-    //  adds/removes all systems/entities from the game scene
-    public SetState(state:boolean)
+    //used to initialize the card game's required resources
+    //  mainly defined as interface linkage to inheriting classes
+    public Initialize()
     {
-        //card/group entities
-        this.cardObjectManager.SetState(state);
-        //movement systems
-        if(state) { engine.addSystem(this.movementSystem); }
-        else { engine.removeSystem(this.movementSystem); }
-    }
-
-    //adds a card collection of the given type
-    public AddCollection(type:number, index:number)
-    {
-        if(this.isDebugging) { log("card game manager - creating collection "+CardCollection.STRINGS_TYPES[type].toString()+":"+index.toString()); }
-        //create collection
-        let collectionData = new CardCollection(type, index);
-        this.cardCollectionList[type].addItem(collectionData);
-        this.cardCollectionDict.addItem(collectionData.Key, collectionData);
-
-        //create game object
-        let collectionObject = this.cardObjectManager.AddGroupObject(type, index);
-
-        //specific processing for each collection type
-        switch(type)
-        {
-            //deck
-            case 0:
-                //populate the deck with a card of every value from each house
-                for (let i = 0; i < Card.STRINGS_HOUSES.length; i++) 
-                {
-                    for (let j = 0; j < Card.STRINGS_VALUES.length; j++) 
-                    {
-                        //create data
-                        collectionData.AddCard(new Card(collectionData.Index, i, j));
-                        //create game object
-                        let cardObject = this.cardObjectManager.AddCardObject(index, i, j);
-                        //add selection action to card
-                        cardObject.collisionObject.addComponent
-                        (
-                            //add click action listener
-                            new OnPointerDown
-                            (
-                                (e) =>
-                                {
-                                    this.SelectCard(collectionData.Index, i, j);
-                                },
-                                {
-                                    button: ActionButton.ANY,
-                                    showFeedback: true,
-                                    hoverText: "[E] SELECT CARD",
-                                    distance: 8
-                                }
-                            )
-                        );
-                    }
-                }
-            break;
-            //hand
-            case 1:
-                //add click action listener
-                this.cardObjectManager.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).collisionObject.addComponent
-                (
-                    //add click action listener
-                    new OnPointerDown
-                    (
-                        (e) =>
-                        {
-                            this.SelectGroup(type, index);
-                        },
-                        {
-                            button: ActionButton.ANY,
-                            showFeedback: true,
-                            hoverText: "[E] SELECT GROUP",
-                            distance: 8
-                        }
-                    )
-                );
-            break;
-            //stack
-            case 2:
-                //add click action listener
-                this.cardObjectManager.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).collisionObject.addComponent
-                (
-                    //add click action listener
-                    new OnPointerDown
-                    (
-                        (e) =>
-                        {
-                            this.SelectGroup(type, index);
-                        },
-                        {
-                            button: ActionButton.ANY,
-                            showFeedback: true,
-                            hoverText: "[E] SELECT GROUP",
-                            distance: 8
-                        }
-                    )
-                );
-            break;
-            //slide
-            case 3:
-                //add click action listener
-                this.cardObjectManager.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).collisionObject.addComponent
-                (
-                    //add click action listener
-                    new OnPointerDown
-                    (
-                        (e) =>
-                        {
-                            this.SelectGroup(type, index);
-                        },
-                        {
-                            button: ActionButton.ANY,
-                            showFeedback: true,
-                            hoverText: "[E] SELECT GROUP",
-                            distance: 8
-                        }
-                    )
-                );
-            break;
-        }
-    }
-
-    //selects the given group
-    //  mainly defined as linkage to on-click events in inheriting classes
-    public SelectGroup(type:number, index:number)
-    {
-    
-    }
-
-    //selects the given card
-    //  mainly defined as linkage to on-click events in inheriting classes
-    public SelectCard(deck:number, house:number, value:number) 
-    {
-
-    }
-
-    //returns targeted card data
-    public GetCardData(cardDeck:number, cardHouse:number, cardValue:number)
-    {
-        return this.GetCollection(0, cardDeck).GetCard(Card.GetKey(cardDeck, cardHouse, cardValue));
-    }
-
-    //returns targeted card object
-    public GetCardObject(cardDeck:number, cardHouse:number, cardValue:number)
-    {
-        return this.cardObjectManager.cardObjectDict.getItem(Card.GetKey(cardDeck, cardHouse, cardValue));
-    }
-
-    //returns targeted group object
-    public GetGroupObject(type:number, index:number)
-    {
-        return this.cardObjectManager.groupObjectDict.getItem(CardCollection.GetKey(type, index));
-    }
-
-    //moves a targeted card to the targeted group 
-    //TODO: migrate card over time to new position
-    public MoveCard(cardDeck:number, cardHouse:number, cardValue:number, groupType:number, groupIndex:number, skipAnimation:boolean = true)
-    {
-        if(this.isDebugging) { log("card game manager - moving card"); }
-        let card:Card = this.GetCardData(cardDeck, cardHouse, cardValue);
-
-        //set card's data
-        //  if card's group is not set to default
-        if(card.groupType != 0 && card.groupType != -1)
-        {
-            //remove card from group
-            this.GetCollection(card.groupType,card.groupIndex).RemoveCard(card);
-        }
-        //  add card to group
-        this.GetCollection(groupType,groupIndex).AddCard(card);
-        
-        //move card's object
-        //  instant movement
-        if(skipAnimation)
-        {
-            this.GetCardObject(cardDeck, cardHouse, cardValue).getComponent(Transform).position = 
-                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardPosition
-                (
-                    this.GetCollection(groupType,groupIndex).cardList.size()-1
-                );
-        }
-        //  real-time movement
-        else
-        {
-            this.movementSystem.AddMovementCommand
-            (
-                this.GetCardObject(cardDeck, cardHouse, cardValue), 
-                this.GetCardObject(cardDeck, cardHouse, cardValue).getComponent(Transform).position, 
-                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardPosition(this.GetCollection(groupType,groupIndex).cardList.size()-1)
-            );
-        }
-        //anchor rotation to default, this should be pushed into the movement command when we begin handling actual player hands
-        this.GetCardObject(cardDeck, cardHouse, cardValue).getComponent(Transform).rotation = new Quaternion().setEuler(-90,180,0);
-        if(this.isDebugging) { log("card game manager - moved card"); }
-    }
-
-    //changes the card's position based on if it is selected
-    //  selection offsets can be defined within group objects
-    public ApplyCardSelection(cardDeck:number, cardHouse:number, cardValue:number, groupType:number, groupIndex:number, state:boolean)
-    {
-        //set card to selected group position
-        if(state)
-        {
-            this.GetCardObject(cardDeck, cardHouse, cardValue).getComponent(Transform).position = 
-                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardSelectedPosition
-                (
-                    this.GetCollection(groupType,groupIndex).GetCard(Card.GetKey(cardDeck, cardHouse, cardValue)).groupPosition
-                );
-        }
-        //set card to standard group position
-        else
-        {
-            this.GetCardObject(cardDeck, cardHouse, cardValue).getComponent(Transform).position = 
-                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardPosition
-                (
-                    this.GetCollection(groupType,groupIndex).GetCard(Card.GetKey(cardDeck, cardHouse, cardValue)).groupPosition
-                );
-        }
+        if(this.isDebugging) { log("card game manager - DEAD CHECK"); }
     }
 
     //resets the game's state
@@ -339,27 +126,196 @@ export class CardGameManager
         this.cardCurrentValue = -1;
 
         //remove all cards from non-deck groups and ensure all cards are deselected
-        //  iterate through all decks
-        let list:List<Card>;
+        //  iterates through the current common list of included cards
         let card:Card;
-        for (let d = 0; d < this.cardDecks.size(); d++) 
+        for (let i = 0; i < this.cardList.size(); i++) 
         {
-            //iterate through deck's cards
-            list = this.cardDecks.getItem(d).cardList;
-            for (let i = 0; i < list.size(); i++) 
+            card = this.cardList.getItem(i);
+            //ensure we are not removing card from a null/deck group
+            if(card.groupType != -1 && card.groupType != 0)
             {
-                card = list.getItem(i);
-                //ensure we are not removing card from a null/deck group
-                if(card.groupType != -1 && card.groupType != 0)
-                {
-                    this.GetCollection(card.groupType, card.groupIndex).RemoveCard(card);
-                }
-                //disable interaction, highlight view, and selection
-                this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(false);
-                this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionViewState(false);
+                this.GetCollection(card.groupType, card.groupIndex).RemoveCard(card);
             }
+            //disable interaction, highlight view, and selection
+            this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(false);
+            this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionViewState(false);
         }
+        //do a quick pass over all remaining hands, stacks, and slides to catch any missed/hanging cards
+        for (let i = 0; i < this.cardHands.size(); i++)
+        {
+            let col:CardCollection = this.cardHands.getItem(i);
+            while(col.cardList.size() > 0)
+            {
+                col.RemoveCard(col.cardList.getItem(col.cardList.size()-1));
+            }
+        } 
+        for (let i = 0; i < this.cardStacks.size(); i++)
+        {
+            let col:CardCollection = this.cardStacks.getItem(i);
+            while(col.cardList.size() > 0)
+            {
+                col.RemoveCard(col.cardList.getItem(col.cardList.size()-1));
+            }
+        } 
+        for (let i = 0; i < this.cardSlides.size(); i++)
+        {
+            let col:CardCollection = this.cardSlides.getItem(i);
+            while(col.cardList.size() > 0)
+            {
+                col.RemoveCard(col.cardList.getItem(col.cardList.size()-1));
+            }
+        } 
+        
 
         if(this.isDebugging) { log("card game manager - game reset"); }
+    }
+
+    //shuffles all cards in this game TOGETHER
+    //most card games use a single deck, so you can shuffle and process on a collection level
+    //use this function if the card game requires multiple decks in-play at the same time
+    //be sure to iterate through 'cardList' instead of the individual deck collections
+    public ShuffleCards()
+    {
+        let card:Card;
+        let swap:number;
+        let count = this.cardList.size();
+        for (let i = 0; i < this.cardList.size(); i++) 
+        {
+            swap = Math.floor(Math.random() * (count));
+            card = this.cardList.getItem(swap);
+            this.cardList.removeItem(card);
+            this.cardList.addItem(card);
+        }
+    }
+
+    //starts a new game
+    //  mainly defined as interface linkage to inheriting classes
+    public NewGame() 
+    {
+
+    }
+
+    //displays all cards play can interact with
+    //  extend this in you inherit class if you have additional objects (ex:alternative table)
+    public DisplayMoves()
+    {
+
+    }
+
+    //sets engine state of all card game resources
+    //  extend this in you inherit class if you have additional objects (ex:alternative table)
+    public SetState(state:boolean)
+    {
+        this.resources.SetState(state);
+    }
+
+    //selects the given group
+    //  mainly defined as interface linkage to inheriting classes
+    public SelectGroup(type:number, index:number) 
+    { 
+
+    }
+
+    //selects the given card
+    //  mainly defined as interface linkage to inheriting classes
+    public SelectCard(deck:number, house:number, value:number) 
+    {  
+
+    }
+
+    //returns targeted card data
+    public GetCardData(deck:number, house:number, value:number)
+    {
+        return this.GetCollection(0, deck).GetCard(Card.GetKey(deck, house, value));
+    }
+
+    //returns targeted card object
+    public GetCardObject(deck:number, house:number, value:number)
+    {
+        return this.cardObjectManager.cardObjectDict.getItem(Card.GetKey(deck, house, value));
+    }
+
+    //returns targeted group object
+    public GetGroupObject(type:number, index:number)
+    {
+        return this.cardObjectManager.groupObjectDict.getItem(CardCollection.GetKey(type, index));
+    }
+
+    //moves a targeted card to the targeted group
+    public MoveCard(deck:number, house:number, value:number, groupType:number, groupIndex:number, skipAnimation:boolean = true)
+    {
+        if(this.isDebugging) { log("card game manager - moving card"); }
+        let card:Card = this.GetCardData(deck, house, value);
+
+        //set card's data
+        //  if card's group is not set to default
+        if(card.groupType != 0 && card.groupType != -1)
+        {
+            //remove card from group
+            this.GetCollection(card.groupType,card.groupIndex).RemoveCard(card);
+        }
+        //  add card to group
+        this.GetCollection(groupType,groupIndex).AddCard(card);
+        
+        //move card's object
+        //  instant movement
+        if(skipAnimation)
+        {
+            this.GetCardObject(deck, house, value).getComponent(Transform).position = 
+                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardPosition
+                (
+                    this.GetCollection(groupType,groupIndex).cardList.size()-1
+                );
+        }
+        //  real-time movement
+        else
+        {
+            this.movementSystem.AddMovementCommand
+            (
+                this.GetCardObject(deck, house, value), 
+                this.GetCardObject(deck, house, value).getComponent(Transform).position, 
+                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardPosition(this.GetCollection(groupType,groupIndex).cardList.size()-1)
+            );
+        }
+        //anchor rotation to default, this should be pushed into the movement command when we begin handling actual player hands
+        this.GetCardObject(deck, house, value).getComponent(Transform).rotation = new Quaternion().setEuler(-90,180,0);
+        if(this.isDebugging) { log("card game manager - moved card"); }
+    }
+
+    //changes the card's position based on if it is selected
+    //  selection offsets can be defined within group objects
+    public ApplyCardSelection(deck:number, house:number, value:number, groupType:number, groupIndex:number, state:boolean)
+    {
+        //set card to selected group position
+        if(state)
+        {
+            this.GetCardObject(deck, house, value).getComponent(Transform).position = 
+                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardSelectedPosition
+                (
+                    this.GetCollection(groupType,groupIndex).GetCard(Card.GetKey(deck, house, value)).groupPosition
+                );
+        }
+        //set card to standard group position
+        else
+        {
+            this.GetCardObject(deck, house, value).getComponent(Transform).position = 
+                this.cardObjectManager.groupObjectDict.getItem(groupType+"_"+groupIndex).CardPosition
+                (
+                    this.GetCollection(groupType,groupIndex).GetCard(Card.GetKey(deck, house, value)).groupPosition
+                );
+        }
+    }
+
+    //deselects the currently selected card
+    public DeselectCard()
+    {
+        //change interaction display state
+        this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionState(false);
+        this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionViewState(false);
+
+        //update identity
+        this.cardCurrentDeck = -1;
+        this.cardCurrentHouse = -1;
+        this.cardCurrentValue = -1;
     }
 }

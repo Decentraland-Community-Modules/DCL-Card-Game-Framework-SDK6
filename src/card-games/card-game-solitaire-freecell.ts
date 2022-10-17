@@ -2,42 +2,39 @@
     represents the logic/game rules of the game of solitaire, freecell style. 
     this game must be hosted via the game table module. 
 */
-//import { Card } from "src/card-game-core/card";
-//import { CardCollection } from "src/card-game-core/card-collection";
 import { Card } from "src/card-game-core/card";
 import { CardCollection } from "src/card-game-core/card-collection";
 import { CardGameManager } from "src/card-game-core/card-game-manager";
+import { CardGameResources } from "src/card-game-core/card-game-resources";
 export class CardGameManagerSolitaireFreeCell extends CardGameManager
 {
     //number of free zones available for use when moving large stacks
     //  free cells 
     availableFreeZones:number = 0;
-    //  playzone cells
-    availablePlayzones:number = 0;
-
-    //display text used for displaying current game state
-    //  'in-progress/win/loss' should only be seen, but also provides some debugging info if crashes at certain state
-    textGameState:TextShape;
 
     //constructor
-    constructor(parent:Entity, textGameState:TextShape)
+    constructor(res:CardGameResources)
     {
         //base constructor
-        super(parent);
-        this.gameName = "FreeCell";
+        super(res);
+    }
+
+    //used to initialize the card game's required resources
+    public Initialize()
+    {
         if(this.isDebugging) { log("solitaire manager - initializing"); }
-
-        this.textGameState = textGameState;
         this.textGameState.value = "Initializing...";
+        //set board's scale
+        this.cardObjectManager.getComponent(Transform).scale = new Vector3(1, 1, 1);
 
-        //create required collections
-        //  create a single deck
-        this.AddCollection(0, 0);
-        //  create 4 stacks for endzone, each only accepts a single house and requires a straight input
+        //define required collections
+        //  1 card deck
+        this.resources.SetRequiredCollections(0, 1);
+        //  8 stacks: 4 endzones, 4 freecells
+        this.resources.SetRequiredCollections(2, 8);
+        //      position endzones 
         for (let i = 0; i < 4; i++) 
         {
-            //create collection
-            this.AddCollection(2, i);
             //set object position details
             this.cardObjectManager.SetGroupObjectPosition(2, i, 0, new Vector3(1.52-(i*0.36), 0.05, 1.45));
             this.cardObjectManager.SetGroupCardPosition(2, i, 0, new Vector3(0, 0.01, 0));
@@ -49,11 +46,9 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
             this.GetCollection(2, i).placementTypePrimary = 1;
             this.GetCollection(2, i).placementTypeSecondary = i;
        }
-        //  create 4 stacks for free cells, each only accepts 1 card of any type
+        //      position freecells
         for (let i = 0; i < 4; i++) 
         {
-            //create collection
-            this.AddCollection(2, i+4);
             //set object position details
             this.cardObjectManager.SetGroupObjectPosition(2, i+4, 0, new Vector3(-1.52+(i*0.36), 0.05, 1.45));
             this.cardObjectManager.SetGroupCardPosition(2, i+4, 0, new Vector3(0, 0.01, 0));
@@ -67,11 +62,10 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
             this.GetCollection(2, i).placementTypePrimary = 0;
             this.GetCollection(2, i).placementTypeSecondary = 0;
         }
-        //  create 8 slides for playing field
+        //  8 slides for playing field
+        this.resources.SetRequiredCollections(3, 8);
         for (let i = 0; i < 8; i++) 
         {
-            //create collection
-            this.AddCollection(3, i);
             //set object position details
             this.cardObjectManager.SetGroupObjectPosition(3, i, 0, new Vector3(-1.52+(i*0.435), 0.05, 0.90));
             this.cardObjectManager.SetGroupCardPosition(3, i, 0, new Vector3(0, 0.01, 0));
@@ -95,29 +89,17 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
         //set defualt state
         this.Reset();
 
-        //set available zone count to default
-        this.availableFreeZones = 4;
-        this.availablePlayzones = 0;
-
         //shuffle cards
-        this.cardDecks.getItem(0).ShuffleCards();
+        this.ShuffleCards();
 
-        //sort all cards across all standard playzones
-        let house:number;
-        let value:number;
-        if(this.isDebugging) { log("solitaire manager - deck size "+this.GetCollection(0,0).cardList.size().toString()); }
-        for (let i = 0; i < this.GetCollection(0,0).cardList.size(); i++) 
+        //place cards across standard playzones
+        let card:Card;
+        if(this.isDebugging) { log("solitaire manager - number of cards used "+this.cardList.size().toString()); }
+        
+        for (let i = 0; i < this.cardList.size(); i++) 
         {
-            house = this.GetCardFromCollection(0,0,i).House;
-            value = this.GetCardFromCollection(0,0,i).Value;
-            this.MoveCard
-            (
-                0,
-                house,
-                value,
-                3,
-                i%8
-            );
+            card = this.cardList.getItem(i);
+            this.MoveCard(0, card.House, card.Value, 3, i%8);
         }
 
         //display all valid moves
@@ -129,35 +111,37 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
 
     //creates a preview of all possible moves available with the currently selected card, highlighting all moves
     //  this function contains all rules regarding card placement on the table and checking victory conditions
+    private str:string = "";
     public DisplayMoves()
     {
         if(this.isDebugging) { log("solitaire manager - displaying all possible selections"); }
+        if(this.isDebugging) { this.str = "Move Display Log: cleaning previous visuals"; }
         let card:Card;
         let collection:CardCollection;
+        log("BREAK A "+this.countStack.toString());
 
         //clear all previously displayed moves
         //  all groups
-        for (let i = 0; i < this.cardStacks.size(); i++) 
+        for (let i = 0; i < this.countStack; i++) 
         {
             this.GetGroupObject(2, i).SetInteractionState(false);
             this.GetGroupObject(2, i).SetInteractionViewState(false);
         }
-        for (let i = 0; i < this.cardSlides.size(); i++) 
+        for (let i = 0; i < this.countSlide; i++) 
         {
             this.GetGroupObject(3, i).SetInteractionState(false);
             this.GetGroupObject(3, i).SetInteractionViewState(false);
         }
-        //  all cards, processing by house and value
-        for (let i = 0; i < Card.STRINGS_HOUSES.length; i++) 
+        //  all cards
+        for (let i = 0; i < this.cardList.size(); i++) 
         {
-            for (let j = 0; j < Card.STRINGS_VALUES.length; j++) 
-            {
-                this.GetCardObject(0, i, j).SetInteractionState(false);
-                this.GetCardObject(0, i, j).SetInteractionViewState(false);
-            }
+            card = this.cardList.getItem(i);
+            this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionState(false);
+            this.GetCardObject(card.Deck, card.House, card.Value).SetInteractionViewState(false);
         }
 
         //check for win condition
+        if(this.isDebugging) { this.str += "\nchecking win condition: "; }
         //check if each endzone stack is full
         let victory:Boolean = true;
         for (let i = 0; i < 4; i++) 
@@ -167,6 +151,7 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
                 victory = false;
             }
         }
+        if(this.isDebugging) { this.str += victory; }
         if(victory)
         {
             this.textGameState.value = "Victory!";
@@ -174,7 +159,7 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
         }
 
         //revalue available free cells
-        //  TODO: could optimize by altering value when cards are added/removed from freecells
+        if(this.isDebugging) { this.str += "\nchecking freecell availability: "; }
         this.availableFreeZones = 0;
         for (let i = 0; i < 4; i++) 
         {
@@ -183,13 +168,16 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
                 this.availableFreeZones++;
             }
         }
+        if(this.isDebugging) { this.str += this.availableFreeZones.toString(); }
 
         //if no card is selected
-        if(this.cardCurrentHouse == -1)
+        if(this.isDebugging) { this.str += "\ncard selected: "; }
+        if(this.cardCurrentDeck == -1)
         {
+            if(this.isDebugging) { this.str += "false"; }
             //top card in endzone/freecell tiles are valid
             //  process each stack group
-            for (let i = 0; i < this.cardStacks.size(); i++) 
+            for (let i = 0; i < this.countStack; i++) 
             {
                 //ensure group has a card available
                 collection = this.cardStacks.getItem(i);
@@ -203,7 +191,7 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
                 }
             }
             //  process each slide group
-            for (let i = 0; i < this.cardSlides.size(); i++) 
+            for (let i = 0; i < this.countSlide; i++) 
             {
                 //ensure group has a card available
                 collection = this.cardSlides.getItem(i);
@@ -246,6 +234,7 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
         //if card is selected
         else
         {
+            if(this.isDebugging) { this.str += "true, displaying deselect option"; }
             //selected card's deselect option
             this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionState(true);
             this.GetCardObject(this.cardCurrentDeck, this.cardCurrentHouse, this.cardCurrentValue).SetInteractionViewState(true);
@@ -317,6 +306,7 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
             }
         }
 
+        if(this.isDebugging) { log(this.str); }
         if(this.isDebugging) { log("solitaire manager - displayed all possible selections"); }
     }
 
@@ -494,7 +484,9 @@ export class CardGameManagerSolitaireFreeCell extends CardGameManager
             this.DeselectCard();
         }
         //update display for all valid moves
+        log("BREAK S "+this.cardCurrentDeck.toString());
         this.DisplayMoves();
+        log("BREAK S "+this.cardCurrentDeck.toString());
         if(this.isDebugging) { log("solitaire manager - selected card "+deck.toString()+":"+Card.STRINGS_VALUES[value]+" of "+Card.STRINGS_HOUSES[house]); }
     }
 

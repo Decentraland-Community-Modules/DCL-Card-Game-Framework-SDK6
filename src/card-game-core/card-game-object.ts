@@ -133,6 +133,50 @@ export class CardObjectManager extends Entity
         }
     }
 
+    //sets the state of the group objects relevent to engine
+    public SetGroupObjectState(type:number, index:number, state:boolean)
+    {
+        if(state)
+        {
+            if(!this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).isAddedToEngine())
+            {
+                this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).SetInteractionState(false);
+                this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).SetInteractionViewState(false);
+                engine.addEntity(this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index))); 
+            }
+        }
+        else
+        {
+            if(this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).isAddedToEngine())
+            {
+                this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).SetInteractionState(false);
+                this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)).SetInteractionViewState(false);
+                engine.removeEntity(this.groupObjectDict.getItem(CardObjectManager.GetKey(type, index)));
+            }
+        }
+    }
+
+    //sets the state of the group objects relevent to engine
+    public SetCardObjectState(deck:number, house:number, value:number, state:boolean)
+    {
+        //grab card object
+        let cardObj:CardObject = this.cardObjectDict.getItem(Card.GetKey(deck, house, value));
+        if(state)
+        {
+            //if(!cardObj.isAddedToEngine()) 
+            cardObj.SetInteractionState(false);
+            cardObj.SetInteractionViewState(false);
+            engine.addEntity(cardObj);
+        }
+        else
+        {
+            //if(cardObj.isAddedToEngine()) 
+            cardObj.SetInteractionState(false);
+            cardObj.SetInteractionViewState(false);
+            engine.removeEntity(cardObj); 
+        }
+    }
+
     //adds a card parent object, returns created object
     //  call this to add locations for discard piles, player hands, or deck stacks
     private slideLength = 1/14;
