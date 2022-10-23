@@ -19,9 +19,11 @@ File Overview:
 You can find more information inside the files within each of these directories. Most files also contain heavy log text that is visible in your browser's console (just toggle isDebugging=true). Please be aware that these log calls can cause lag during some of the more intensive processes, so if you are running into lag check to ensure these are toggled off.
 
 TODO LIST:
+
 	pending...
 
 BUG LIST:
+
 	currently no known bugs
 
 
