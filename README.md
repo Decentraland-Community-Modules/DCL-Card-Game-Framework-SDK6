@@ -20,7 +20,7 @@ You can find more information inside the files within each of these directories.
 
 TODO LIST:
 
-	pending...
+	-networking for multiplayer (this is currently delayed due to the impending launch of SDK7, which might provide simpler implementations)
 
 BUG LIST:
 
