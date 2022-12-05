@@ -4,8 +4,6 @@ This module provides users an easy to use interface for creating and managing ca
 
 This module has been heavily documented and will work as-is/out of the box. You can try the live scene [here](https://decentraland-solitaire.herokuapp.com/?realm=v1%7Edecentraland-solitaire.herokuapp.com). Or you can download the scene and run it locally (ensure you have the DCL SDK installed).
 
-<live scene linkage may be degraded due to hosting service removing free hosting for smaller projects. alternative hosting services are being researched>
-
 This module is split into seperate segments to make management easier.
 File Overview:
 
@@ -20,6 +18,8 @@ You can find more information inside the files within each of these directories.
 TODO LIST:
 
 	-networking for multiplayer (this is currently delayed due to the impending launch of SDK7, which might provide simpler implementations)
+	-live scene linkage will degrade shortly due to hosting service removing free hosting for smaller projects. alternative hosting services are being researched (likely going to use Render).
+
 
 BUG LIST:
 
