@@ -2,6 +2,8 @@
 
 This module provides users an easy to use interface for creating and managing card games, and also comes with 6 functional solitaire games: FreeCell, Patience, Spider, Accordion, Pyramid, and Tri Peaks. Each game table can run multiple game types (selectable from the menu) while maintaining minimal in-scene impact on resources. When the module reaches a stable point, the core features will be installable via node package manager to make integration and accessibility easier; this is currently planned for release after peer-to-peer multiplayer has been added to the module.
 
+![firefox_gO7Gr4nrNM](https://user-images.githubusercontent.com/91359820/205764426-7a940e7b-4f40-4fb9-b00f-90ee0b803d6c.png)
+
 This module has been heavily documented and will work as-is/out of the box. You can try the live scene [here](https://decentraland-solitaire.herokuapp.com/?realm=v1%7Edecentraland-solitaire.herokuapp.com). Or you can download the scene and run it locally (ensure you have the DCL SDK installed).
 
 This module is split into seperate segments to make management easier.
